@@ -1,3 +1,46 @@
+# Current Task: Markdown Preview
+
+## Goal
+Toggle between editing and rendered markdown preview. Keyboard-driven, no visible UI chrome.
+
+## Approach
+- `Cmd/Ctrl+P` toggles between edit and preview modes
+- Preview renders markdown to HTML in same viewport area
+- Zero dependencies: write minimal markdown parser (headings, bold, italic, links, code, lists)
+- Preserve scroll position when toggling back
+
+## Changes
+
+### 1. `src/editor/markdown.ts` (new)
+Minimal markdown → HTML converter:
+- `# Heading` → `<h1>` (h1-h6)
+- `**bold**` → `<strong>`
+- `*italic*` → `<em>`
+- `` `code` `` → `<code>`
+- `[text](url)` → `<a>`
+- `- item` → `<ul><li>`
+- Paragraphs from blank lines
+
+### 2. `src/ui/styles.css`
+- Add `.preview` class with same typography as editor
+- Style rendered markdown elements (headings, links, code, lists)
+- Match light/dark themes
+
+### 3. `src/editor/index.ts`
+- Add preview div (hidden by default)
+- `Cmd/Ctrl+P` toggles textarea ↔ preview
+- On preview show: parse content, render to div
+- Update help overlay with new shortcut
+
+## Done When
+1. Type markdown in editor
+2. Press `Cmd+P` → see rendered preview
+3. Press `Cmd+P` → back to editing
+4. Preview respects dark/light theme
+5. `npm run build` passes
+
+---
+
 # Build Plan: Minimalist Writing App
 
 ## Phase 1: Foundation (get something on screen)

@@ -81,3 +81,70 @@ html, body, #app {
 .help-content dd {
   margin: 0;
 }
+
+.preview {
+  display: none;
+  width: 100%;
+  height: 100%;
+  padding: 2rem;
+  overflow-y: auto;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 18px;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+.preview.visible {
+  display: block;
+}
+
+.preview h1,
+.preview h2,
+.preview h3,
+.preview h4,
+.preview h5,
+.preview h6 {
+  margin: 1.5em 0 0.5em;
+  line-height: 1.3;
+}
+
+.preview h1 { font-size: 1.75em; }
+.preview h2 { font-size: 1.5em; }
+.preview h3 { font-size: 1.25em; }
+.preview h4 { font-size: 1.1em; }
+.preview h5,
+.preview h6 { font-size: 1em; }
+
+.preview p {
+  margin: 1em 0;
+}
+
+.preview ul {
+  margin: 1em 0;
+  padding-left: 2em;
+}
+
+.preview li {
+  margin: 0.25em 0;
+}
+
+.preview code {
+  background: var(--text);
+  color: var(--bg);
+  padding: 0.1em 0.3em;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+.preview a {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+.preview strong {
+  font-weight: 700;
+}
+
+.preview em {
+  font-style: italic;
+}
