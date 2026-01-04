@@ -12,9 +12,12 @@
 1. EXPLORE: GLOB `/minwrite/specs/*.md` + relevant `/minwrite/src/**/*.ts`, then READ matching files
 2. PLAN: Write plan to /minwrite/scratch/plan.md, get approval before coding
 3. CODE: One feature per branch: feat/<name>, fix/<name>, refactor/<name>
-4. TEST: `npm test` must pass before any commit
+4. TEST:
+   - Data layer (`src/library/*`): `cd minwrite && npm test` must pass
+   - UI layer (`src/editor/*`, `src/ui/*`): `npm run build` + manual browser verification
+   - New data logic? Write tests first (TDD)
 5. COMMIT: Small commits, imperative mood, reference spec if exists
-6. VERIFY: `npm run build && npm test` green = feature complete
+6. VERIFY: `cd minwrite && npm run build && npm test` green = feature complete
 
 ## Stop If
 - Coding before reading relevant /src/ and /specs/
@@ -24,6 +27,6 @@
 - WYSIWYG, toolbars, or any chrome that interrupts writing
 
 ## Before Any Change
-> Have I read the spec? Is the plan approved? Will tests prove completion?
+> Have I read the spec? Is the plan approved? Will tests/build prove completion?
 
-**No spec read = no code. No plan approval = no implementation. No green tests = not done.**
+**No spec read = no code. No plan approval = no implementation. No green build = not done.**

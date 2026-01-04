@@ -10,6 +10,16 @@ const DB_VERSION = 1;
 const STORE_NAME = 'documents';
 
 let dbPromise: Promise<IDBDatabase> | null = null;
+let dbInstance: IDBDatabase | null = null;
+
+/** Reset DB connection - for testing only */
+export async function _resetDB(): Promise<void> {
+  if (dbInstance) {
+    dbInstance.close();
+    dbInstance = null;
+  }
+  dbPromise = null;
+}
 
 export function openDB(): Promise<IDBDatabase> {
   if (dbPromise) return dbPromise;
@@ -18,7 +28,10 @@ export function openDB(): Promise<IDBDatabase> {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
 
     request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
+    request.onsuccess = () => {
+      dbInstance = request.result;
+      resolve(request.result);
+    };
 
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result;
