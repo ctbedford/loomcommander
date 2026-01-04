@@ -34,3 +34,39 @@
 
 ## Verify Completion
 `cd minwrite && npm run build` succeeds, opens in browser, typing persists on refresh.
+
+---
+
+# Current Task: Dark/Light Mode
+
+## Approach
+CSS custom properties + system preference + keyboard toggle. No visible UI.
+
+## Changes
+
+### 1. `src/ui/styles.css`
+- Replace hardcoded colors with CSS custom properties
+- Add `:root` light theme (current colors)
+- Add `[data-theme="dark"]` dark theme
+- Use `@media (prefers-color-scheme: dark)` as system default
+
+### 2. `src/editor/storage.ts`
+- Add `loadTheme()` / `saveTheme()` functions
+- Key: `minwrite:theme` (values: `light`, `dark`, or absent for system)
+
+### 3. `src/editor/index.ts`
+- Add `Cmd/Ctrl+Shift+L` keyboard shortcut to toggle
+- Apply saved theme on load
+
+## Colors
+| Token       | Light     | Dark      |
+|-------------|-----------|-----------|
+| --bg        | #fafafa   | #1a1a1a   |
+| --text      | #1a1a1a   | #e5e5e5   |
+| --placeholder | #999    | #666      |
+
+## Done When
+1. Fresh load respects system preference
+2. `Cmd+Shift+L` toggles light/dark
+3. Preference persists on refresh
+4. `npm test` passes

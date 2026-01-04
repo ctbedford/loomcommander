@@ -4,9 +4,29 @@
   box-sizing: border-box;
 }
 
+:root {
+  --bg: #fafafa;
+  --text: #1a1a1a;
+  --placeholder: #999;
+}
+
+[data-theme="dark"] {
+  --bg: #1a1a1a;
+  --text: #e5e5e5;
+  --placeholder: #666;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1a1a1a;
+    --text: #e5e5e5;
+    --placeholder: #666;
+  }
+}
+
 html, body, #app {
   height: 100%;
-  background: #fafafa;
+  background: var(--bg);
 }
 
 .editor {
@@ -20,9 +40,9 @@ html, body, #app {
   font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
   font-size: 18px;
   line-height: 1.7;
-  color: #1a1a1a;
+  color: var(--text);
 }
 
 .editor::placeholder {
-  color: #999;
+  color: var(--placeholder);
 }

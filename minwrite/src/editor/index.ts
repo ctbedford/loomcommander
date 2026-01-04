@@ -1,10 +1,11 @@
-import { loadContent, saveContent } from './storage';
+import { loadContent, saveContent, loadTheme, saveTheme, Theme } from './storage';
 
 const DEBOUNCE_MS = 500;
 
 export class Editor {
   private textarea: HTMLTextAreaElement;
   private saveTimeout: number | null = null;
+  private currentTheme: Theme | null = null;
 
   constructor(container: HTMLElement) {
     this.textarea = document.createElement('textarea');
@@ -18,6 +19,30 @@ export class Editor {
 
     container.appendChild(this.textarea);
     this.textarea.focus();
+
+    this.initTheme();
+  }
+
+  private initTheme(): void {
+    this.currentTheme = loadTheme();
+    this.applyTheme();
+  }
+
+  private applyTheme(): void {
+    if (this.currentTheme) {
+      document.documentElement.setAttribute('data-theme', this.currentTheme);
+    } else {
+      document.documentElement.removeAttribute('data-theme');
+    }
+  }
+
+  private toggleTheme(): void {
+    const isDark = this.currentTheme === 'dark' ||
+      (this.currentTheme === null && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+    this.currentTheme = isDark ? 'light' : 'dark';
+    saveTheme(this.currentTheme);
+    this.applyTheme();
   }
 
   private handleInput = (): void => {
@@ -31,6 +56,13 @@ export class Editor {
   };
 
   private handleKeydown = (e: KeyboardEvent): void => {
+    // Toggle theme: Cmd/Ctrl+Shift+L
+    if (e.key === 'L' && e.shiftKey && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      this.toggleTheme();
+      return;
+    }
+
     if (e.key === 'Tab') {
       e.preventDefault();
       const start = this.textarea.selectionStart;
