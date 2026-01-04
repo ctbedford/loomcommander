@@ -1,5 +1,13 @@
-import { loadContent, saveContent, loadTheme, saveTheme, Theme } from './storage';
+import { loadTheme, saveTheme, Theme, getCurrentDocId, setCurrentDocId } from './storage';
 import { markdownToHtml } from './markdown';
+import { CommandPalette } from './palette';
+import {
+  createDocument,
+  loadDocument,
+  saveDocument,
+  listDocuments,
+  migrateFromLocalStorage,
+} from '../library/documents';
 
 const DEBOUNCE_MS = 500;
 
@@ -10,18 +18,22 @@ export class Editor {
   private currentTheme: Theme | null = null;
   private helpOverlay: HTMLElement;
   private isPreviewMode = false;
+  private currentDocId: string | null = null;
+  private palette: CommandPalette;
 
   constructor(container: HTMLElement) {
+
     this.textarea = document.createElement('textarea');
     this.textarea.className = 'editor';
     this.textarea.placeholder = 'Start writing...';
     this.textarea.autofocus = true;
-    this.textarea.value = loadContent();
 
     this.preview = document.createElement('div');
     this.preview.className = 'preview';
 
     this.helpOverlay = this.createHelpOverlay();
+
+    this.palette = new CommandPalette(container, (id) => this.handlePaletteSelect(id));
 
     this.textarea.addEventListener('input', this.handleInput);
     this.textarea.addEventListener('keydown', this.handleKeydown);
@@ -30,9 +42,87 @@ export class Editor {
     container.appendChild(this.textarea);
     container.appendChild(this.preview);
     container.appendChild(this.helpOverlay);
-    this.textarea.focus();
 
     this.initTheme();
+  }
+
+  async init(): Promise<void> {
+    // Try to migrate from old localStorage format
+    const migratedId = await migrateFromLocalStorage();
+    if (migratedId) {
+      this.currentDocId = migratedId;
+      setCurrentDocId(migratedId);
+    } else {
+      // Check for existing current doc
+      this.currentDocId = getCurrentDocId();
+    }
+
+    // Load current doc or create new one
+    if (this.currentDocId) {
+      const doc = await loadDocument(this.currentDocId);
+      if (doc) {
+        this.textarea.value = doc.content;
+      } else {
+        // Doc was deleted, create new
+        await this.newDocument();
+      }
+    } else {
+      // No current doc, create new
+      await this.newDocument();
+    }
+
+    this.textarea.focus();
+  }
+
+  private async newDocument(): Promise<void> {
+    await this.saveCurrentDocument();
+    const doc = await createDocument();
+    this.currentDocId = doc.id;
+    setCurrentDocId(doc.id);
+    this.textarea.value = '';
+    this.textarea.focus();
+  }
+
+  private async switchToDocument(id: string): Promise<void> {
+    if (id === this.currentDocId) return;
+    await this.saveCurrentDocument();
+    const doc = await loadDocument(id);
+    if (doc) {
+      this.currentDocId = doc.id;
+      setCurrentDocId(doc.id);
+      this.textarea.value = doc.content;
+      this.textarea.focus();
+    }
+  }
+
+  private async saveCurrentDocument(): Promise<void> {
+    if (this.currentDocId && this.textarea.value) {
+      await saveDocument(this.currentDocId, this.textarea.value);
+    }
+  }
+
+  private async handlePaletteSelect(id: string | null): Promise<void> {
+    if (id === null) {
+      await this.newDocument();
+    } else {
+      await this.switchToDocument(id);
+    }
+  }
+
+  private async openPalette(): Promise<void> {
+    const docs = await listDocuments();
+    this.palette.open(docs, this.currentDocId);
+  }
+
+  private async closeDocument(): Promise<void> {
+    await this.saveCurrentDocument();
+    const docs = await listDocuments();
+    const otherDocs = docs.filter((d) => d.id !== this.currentDocId);
+    if (otherDocs.length > 0) {
+      await this.switchToDocument(otherDocs[0].id);
+    } else {
+      await this.newDocument();
+    }
   }
 
   private createHelpOverlay(): HTMLElement {
@@ -43,9 +133,12 @@ export class Editor {
     overlay.innerHTML = `
       <div class="help-content">
         <dl>
-          <dt>${mod}/</dt><dd>Show help</dd>
+          <dt>${mod}O</dt><dd>Open document</dd>
+          <dt>${mod}N</dt><dd>New document</dd>
+          <dt>${mod}W</dt><dd>Close document</dd>
           <dt>${mod}P</dt><dd>Toggle preview</dd>
           <dt>${mod}Shift+L</dt><dd>Toggle dark/light</dd>
+          <dt>${mod}/</dt><dd>Show help</dd>
           <dt>Tab</dt><dd>Insert 2 spaces</dd>
         </dl>
       </div>
@@ -103,12 +196,19 @@ export class Editor {
       clearTimeout(this.saveTimeout);
     }
     this.saveTimeout = window.setTimeout(() => {
-      saveContent(this.textarea.value);
+      if (this.currentDocId) {
+        saveDocument(this.currentDocId, this.textarea.value);
+      }
       this.saveTimeout = null;
     }, DEBOUNCE_MS);
   };
 
   private handleKeydown = (e: KeyboardEvent): void => {
+    // Palette is handled by its own keydown listener
+    if (this.palette.isOpen()) {
+      return;
+    }
+
     // Toggle help: Cmd/Ctrl+/
     if (e.key === '/' && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
@@ -142,6 +242,32 @@ export class Editor {
   };
 
   private handleGlobalKeydown = (e: KeyboardEvent): void => {
+    // Palette takes precedence
+    if (this.palette.isOpen()) {
+      return;
+    }
+
+    // Open palette: Cmd/Ctrl+O
+    if (e.key === 'o' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      this.openPalette();
+      return;
+    }
+
+    // New document: Cmd/Ctrl+N
+    if (e.key === 'n' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      this.newDocument();
+      return;
+    }
+
+    // Close document: Cmd/Ctrl+W
+    if (e.key === 'w' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      this.closeDocument();
+      return;
+    }
+
     // Toggle preview: Cmd/Ctrl+P (works from both edit and preview modes)
     if (e.key === 'p' && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();
