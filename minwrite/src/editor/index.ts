@@ -6,6 +6,7 @@ export class Editor {
   private textarea: HTMLTextAreaElement;
   private saveTimeout: number | null = null;
   private currentTheme: Theme | null = null;
+  private helpOverlay: HTMLElement;
 
   constructor(container: HTMLElement) {
     this.textarea = document.createElement('textarea');
@@ -14,13 +15,42 @@ export class Editor {
     this.textarea.autofocus = true;
     this.textarea.value = loadContent();
 
+    this.helpOverlay = this.createHelpOverlay();
+
     this.textarea.addEventListener('input', this.handleInput);
     this.textarea.addEventListener('keydown', this.handleKeydown);
 
     container.appendChild(this.textarea);
+    container.appendChild(this.helpOverlay);
     this.textarea.focus();
 
     this.initTheme();
+  }
+
+  private createHelpOverlay(): HTMLElement {
+    const overlay = document.createElement('div');
+    overlay.className = 'help-overlay';
+    const isMac = navigator.platform.includes('Mac');
+    const mod = isMac ? '⌘' : 'Ctrl+';
+    overlay.innerHTML = `
+      <div class="help-content">
+        <dl>
+          <dt>${mod}/</dt><dd>Show help</dd>
+          <dt>${mod}Shift+L</dt><dd>Toggle dark/light</dd>
+          <dt>Tab</dt><dd>Insert 2 spaces</dd>
+        </dl>
+      </div>
+    `;
+    overlay.addEventListener('click', () => this.hideHelp());
+    return overlay;
+  }
+
+  private hideHelp(): void {
+    this.helpOverlay.classList.remove('visible');
+  }
+
+  private toggleHelp(): void {
+    this.helpOverlay.classList.toggle('visible');
   }
 
   private initTheme(): void {
@@ -56,6 +86,19 @@ export class Editor {
   };
 
   private handleKeydown = (e: KeyboardEvent): void => {
+    // Toggle help: Cmd/Ctrl+/
+    if (e.key === '/' && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      this.toggleHelp();
+      return;
+    }
+
+    // Dismiss help: Escape
+    if (e.key === 'Escape') {
+      this.hideHelp();
+      return;
+    }
+
     // Toggle theme: Cmd/Ctrl+Shift+L
     if (e.key === 'L' && e.shiftKey && (e.metaKey || e.ctrlKey)) {
       e.preventDefault();

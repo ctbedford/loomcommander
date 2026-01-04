@@ -46,3 +46,38 @@ html, body, #app {
 .editor::placeholder {
   color: var(--placeholder);
 }
+
+.help-overlay {
+  position: fixed;
+  inset: 0;
+  display: none;
+  place-items: center;
+  background: var(--bg);
+  opacity: 0.95;
+  z-index: 100;
+}
+
+.help-overlay.visible {
+  display: grid;
+}
+
+.help-content {
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 14px;
+  color: var(--text);
+}
+
+.help-content dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.5rem 1.5rem;
+}
+
+.help-content dt {
+  text-align: right;
+  opacity: 0.5;
+}
+
+.help-content dd {
+  margin: 0;
+}

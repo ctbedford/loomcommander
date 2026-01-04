@@ -37,7 +37,32 @@
 
 ---
 
-# Current Task: Dark/Light Mode
+# Current Task: Help Overlay
+
+## Approach
+Press `?` to show/hide a minimal shortcut overlay. Zero footprint otherwise.
+
+## Changes
+
+### 1. `src/ui/styles.css`
+- Add `.help-overlay` styles (centered, semi-transparent bg, matches theme)
+- Hidden by default, shown with `.visible` class
+
+### 2. `src/editor/index.ts`
+- Create overlay DOM element with shortcut list
+- `?` toggles overlay visibility
+- `Escape` dismisses overlay
+- Overlay lists: `?` Help, `Cmd+Shift+L` Toggle theme
+
+## Done When
+1. Press `?` → overlay appears
+2. Press `?` or `Escape` → overlay hides
+3. Works in both light/dark themes
+4. Build passes
+
+---
+
+# Previous: Dark/Light Mode
 
 ## Approach
 CSS custom properties + system preference + keyboard toggle. No visible UI.
