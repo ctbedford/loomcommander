@@ -123,18 +123,53 @@ cd minwrite && npm run build && npm run dev
 
 ---
 
-## Previous Plans
-(archived for reference)
+## Roadmap
 
-### Markdown Preview (completed)
-- Added `src/editor/markdown.ts`
-- Added preview toggle with `Cmd+P`
+### Phase 1: Foundation ✓
+- Editor core - single textarea, full viewport, monospace
+- Document model - localStorage persistence
+- Minimal UI - dark/light themes via CSS vars
 
-### Dark/Light Mode (completed)
+### Phase 2: Markdown ✓
+- Preview pane - toggle with `Cmd+P`, not inline WYSIWYG
+- Minimal parser - headings, bold, italic, links, code, lists
+
+### Phase 3: Library ✓
+- Document list - command palette, first line as title
+- Persistence - IndexedDB for multiple docs
+- Search - fuzzy filter in palette
+
+### Phase 4: Export (pending)
+- HTML export - clean, printable
+- PDF export - via browser print or jsPDF
+- Plain text - strip markdown, just prose
+
+## Tech Stack
+- Vite + TypeScript (strict mode, no React in editor core)
+- CSS custom properties for theming
+- IndexedDB for storage (no backend)
+- Zero runtime dependencies in editor module
+- Vitest + fake-indexeddb for data layer tests
+
+---
+
+## Completed Tasks
+
+### Multi-Document Support
+- IndexedDB wrapper (`src/library/db.ts`)
+- Document CRUD (`src/library/documents.ts`)
+- Command palette (`src/editor/palette.ts`)
+- Migration from localStorage
+
+### Markdown Preview
+- `src/editor/markdown.ts`
+- Toggle with `Cmd+P`
+
+### Dark/Light Mode
 - CSS custom properties
 - `Cmd+Shift+L` toggle
 - System preference default
 
-### Help Overlay (completed)
+### Help Overlay
 - `Cmd+/` shows shortcuts
 - Escape dismisses
