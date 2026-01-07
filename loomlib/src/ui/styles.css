@@ -1,0 +1,147 @@
+@import './variables.css';
+
+/*
+ * Loomlib Base Styles
+ * Planetarium control room aesthetic
+ */
+
+/* ========================================
+ * Reset
+ * ======================================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* ========================================
+ * Base Document
+ * ======================================== */
+html,
+body {
+  height: 100%;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  background: var(--bg);
+  color: var(--text);
+  line-height: var(--line-height);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#app {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ========================================
+ * Focus States - Accessibility
+ * ======================================== */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ========================================
+ * Selection
+ * ======================================== */
+::selection {
+  background: var(--accent-glow);
+  color: var(--text);
+}
+
+/* ========================================
+ * Scrollbar Styling
+ * ======================================== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--border-focus);
+}
+
+/* Firefox */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+
+/* ========================================
+ * Shell Layout
+ * ======================================== */
+.shell {
+  height: 100%;
+  position: relative;
+  background: var(--bg);
+}
+
+.shell__view {
+  position: absolute;
+  inset: 0;
+}
+
+/* Hide all views by default - use !important to override view-specific display rules */
+.shell__view:not(.shell__view--visible) {
+  display: none !important;
+}
+
+.shell__view--visible {
+  animation: view-fade-in 100ms ease;
+}
+
+@keyframes view-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ========================================
+ * Utility Classes
+ * ======================================== */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Glass card utility */
+.glass {
+  background: var(--glass-bg), var(--glass-bg-solid);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-top-color: var(--glass-border-highlight);
+  border-left-color: var(--glass-border-highlight);
+}
+
+/* Monospace text */
+.mono {
+  font-family: var(--font-mono);
+}

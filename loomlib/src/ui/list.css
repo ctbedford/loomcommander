@@ -1,0 +1,105 @@
+/*
+ * List View
+ * Document list with search
+ */
+
+/* ========================================
+ * Container
+ * ======================================== */
+.list-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg);
+}
+
+/* ========================================
+ * Header / Search
+ * ======================================== */
+.list-view__header {
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.list-view__search {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-base);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.list-view__search:focus {
+  border-color: var(--accent);
+}
+
+.list-view__search::placeholder {
+  color: var(--placeholder);
+}
+
+/* ========================================
+ * Document List
+ * ======================================== */
+.list-view__list {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+/* ========================================
+ * Footer / New Button
+ * ======================================== */
+.list-view__footer {
+  padding: var(--space-md);
+  border-top: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.list-view__new-btn {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: var(--text-muted);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.list-view__new-btn:hover {
+  background: var(--bg-subtle);
+  color: var(--text);
+  border-color: var(--border-focus);
+}
+
+/* ========================================
+ * Selected Card State
+ * ======================================== */
+.doc-card--selected {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-focus);
+}
+
+/* ========================================
+ * Empty State
+ * ======================================== */
+.list-view__empty {
+  text-align: center;
+  color: var(--text-muted);
+  padding: var(--space-xl);
+  font-size: var(--font-size-base);
+  opacity: 0.7;
+}

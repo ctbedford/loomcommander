@@ -1,0 +1,259 @@
+/*
+ * Triage Modal
+ * Glassmorphism modal for document metadata editing
+ */
+
+/* ========================================
+ * Backdrop
+ * ======================================== */
+.triage-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: oklch(0% 0 0 / 0.5);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity var(--transition-normal),
+    visibility var(--transition-normal);
+  z-index: 100;
+}
+
+.triage-modal-backdrop--visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ========================================
+ * Modal Container
+ * ======================================== */
+.triage-modal {
+  /* Glassmorphism */
+  background: var(--glass-bg), var(--glass-bg-solid);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-top-color: var(--glass-border-highlight);
+  border-left-color: var(--glass-border-highlight);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+
+  width: 90%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ========================================
+ * Header
+ * ======================================== */
+.triage-modal__header {
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--border);
+}
+
+.triage-modal__header h2 {
+  font-size: var(--font-size-md);
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+
+/* ========================================
+ * Body
+ * ======================================== */
+.triage-modal__body {
+  padding: var(--space-lg);
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+/* ========================================
+ * Footer
+ * ======================================== */
+.triage-modal__footer {
+  padding: var(--space-md) var(--space-lg);
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+}
+
+/* ========================================
+ * Buttons
+ * ======================================== */
+.triage-modal__btn {
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.triage-modal__btn--cancel {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.triage-modal__btn--cancel:hover {
+  background: var(--bg-subtle);
+  color: var(--text);
+}
+
+.triage-modal__btn--save {
+  background: var(--accent);
+  border: none;
+  color: oklch(100% 0 0);
+}
+
+.triage-modal__btn--save:hover {
+  filter: brightness(1.1);
+}
+
+/* ========================================
+ * Form Fields
+ * ======================================== */
+.triage-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.triage-field__label {
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: var(--text);
+}
+
+.triage-field__input,
+.triage-field__select {
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  color: var(--text);
+  font-size: var(--font-size-base);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.triage-field__input:focus,
+.triage-field__select:focus {
+  border-color: var(--accent);
+}
+
+.triage-field__input::placeholder {
+  color: var(--placeholder);
+}
+
+.triage-field__empty {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* ========================================
+ * Radio Group
+ * ======================================== */
+.triage-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.triage-radio {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.triage-radio:hover {
+  background: var(--bg-subtle);
+}
+
+.triage-radio--selected {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+
+.triage-radio input {
+  margin-top: 2px;
+  accent-color: var(--accent);
+}
+
+.triage-radio__label {
+  font-weight: 500;
+  color: var(--text);
+}
+
+.triage-radio__desc {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+/* ========================================
+ * Checkbox Group
+ * ======================================== */
+.triage-checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.triage-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.triage-checkbox:hover {
+  background: var(--bg-subtle);
+}
+
+.triage-checkbox--selected {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+
+.triage-checkbox input {
+  accent-color: var(--accent);
+}
+
+.triage-checkbox__icon {
+  font-size: var(--font-size-md);
+  color: var(--color-framework);
+}
+
+.triage-checkbox__label {
+  font-size: var(--font-size-base);
+  color: var(--text);
+}

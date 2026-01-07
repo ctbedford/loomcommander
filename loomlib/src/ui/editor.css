@@ -1,0 +1,243 @@
+/*
+ * Editor View
+ * Minimalist markdown writing experience
+ */
+
+/* ========================================
+ * Container
+ * ======================================== */
+.editor-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg);
+}
+
+/* ========================================
+ * Header Bar
+ * ======================================== */
+.editor-view__header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+/* Navigation buttons group */
+.editor-view__nav {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.editor-view__nav-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.editor-view__nav-btn:hover {
+  background: var(--bg-subtle);
+  color: var(--text);
+  border-color: var(--border-focus);
+}
+
+.editor-view__triage-btn {
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.editor-view__triage-btn:hover {
+  background: var(--bg-subtle);
+  color: var(--text);
+}
+
+/* Title area */
+.editor-view__title-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
+.editor-view__title {
+  font-size: var(--font-size-base);
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ========================================
+ * Metadata Bar
+ * ======================================== */
+.editor-view__meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-md);
+  background: var(--bg-subtle);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  min-height: 32px;
+}
+
+.editor-view__type-icon {
+  font-size: var(--font-size-base);
+}
+
+.editor-view__type-label {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  text-transform: lowercase;
+}
+
+.editor-view__status {
+  font-size: var(--font-size-xs);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+}
+
+.editor-view__status--incubating {
+  background: oklch(72% 0.14 70 / 0.2);
+  color: var(--color-instance);
+}
+
+.editor-view__status--draft {
+  background: var(--bg-elevated);
+}
+
+.editor-view__status--verified {
+  background: oklch(70% 0.14 145 / 0.2);
+  color: var(--color-source);
+}
+
+.editor-view__status--captured {
+  background: oklch(70% 0.12 230 / 0.2);
+  color: var(--color-framework);
+}
+
+.editor-view__tags {
+  display: flex;
+  gap: var(--space-xs);
+  margin-left: auto;
+}
+
+.editor-view__tag {
+  font-size: var(--font-size-xs);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+}
+
+/* ========================================
+ * Save Status Indicator
+ * ======================================== */
+.editor-view__save-status {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  min-width: 60px;
+  text-align: center;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.editor-view__save-status--unsaved {
+  opacity: 1;
+  color: var(--color-instance);
+}
+
+.editor-view__save-status--saving {
+  opacity: 1;
+  color: var(--text-muted);
+}
+
+.editor-view__save-status--saved {
+  opacity: 1;
+  color: var(--color-source);
+  animation: save-status-fade 2s ease-out forwards;
+}
+
+.editor-view__save-status--error {
+  opacity: 1;
+  color: oklch(65% 0.2 25);
+}
+
+@keyframes save-status-fade {
+  0%, 70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* ========================================
+ * Textarea - The writing surface
+ * ======================================== */
+.editor-view__textarea {
+  flex: 1;
+  padding: var(--space-lg);
+  border: none;
+  background: transparent;
+  color: var(--text);
+
+  /* Monospace typography */
+  font-family: var(--font-mono);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height);
+  font-feature-settings: "liga" 1, "calt" 1;
+  letter-spacing: -0.01em;
+
+  resize: none;
+  outline: none;
+}
+
+.editor-view__textarea::placeholder {
+  color: var(--placeholder);
+}
+
+/* Caret styling */
+.editor-view__textarea {
+  caret-color: var(--accent);
+}
+
+/* ========================================
+ * Focus Mode - Full-screen writing
+ * ======================================== */
+.editor-view--focus .editor-view__header {
+  display: none;
+}
+
+.editor-view--focus .editor-view__textarea {
+  padding: var(--space-xl);
+  max-width: 720px;
+  margin: 0 auto;
+}

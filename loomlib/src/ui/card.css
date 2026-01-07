@@ -1,0 +1,215 @@
+/*
+ * Document Card
+ * Glassmorphism card for document list items
+ */
+
+/* ========================================
+ * Base Card
+ * ======================================== */
+.doc-card {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+
+  /* Glassmorphism */
+  background: var(--glass-bg), var(--glass-bg-solid);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-top-color: var(--glass-border-highlight);
+  border-left-color: var(--glass-border-highlight);
+
+  transition:
+    background var(--transition-fast),
+    box-shadow var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.doc-card:hover {
+  background: var(--glass-bg), oklch(22% 0.01 270 / 0.95);
+  box-shadow: var(--shadow-sm);
+}
+
+.doc-card--compact {
+  padding: var(--space-sm) var(--space-md);
+}
+
+/* ========================================
+ * Icon
+ * ======================================== */
+.doc-card__icon {
+  font-size: var(--font-size-lg);
+  line-height: 1;
+  flex-shrink: 0;
+  width: 1.5rem;
+  text-align: center;
+  opacity: 0.9;
+}
+
+/* ========================================
+ * Content Area
+ * ======================================== */
+.doc-card__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.doc-card__title {
+  font-weight: 500;
+  font-size: var(--font-size-base);
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.doc-card__lineage {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  margin-top: var(--space-xs);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.doc-card__badge {
+  display: inline-block;
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  background: var(--bg-subtle);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  margin-top: var(--space-xs);
+}
+
+/* ========================================
+ * Timestamp
+ * ======================================== */
+.doc-card__time {
+  font-size: var(--font-size-sm);
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+/* ========================================
+ * Selected State
+ * ======================================== */
+.doc-card--selected {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-focus);
+}
+
+/* ========================================
+ * Incubating Status - Warm amber pulse
+ * ======================================== */
+.doc-card--incubating {
+  animation: card-incubating-pulse 3s ease-in-out infinite;
+}
+
+@keyframes card-incubating-pulse {
+  0%, 100% {
+    box-shadow: var(--status-incubating-glow);
+  }
+  50% {
+    box-shadow: var(--status-incubating-glow-bright);
+  }
+}
+
+/* Selected + incubating */
+.doc-card--selected.doc-card--incubating {
+  animation: card-incubating-pulse-selected 3s ease-in-out infinite;
+}
+
+@keyframes card-incubating-pulse-selected {
+  0%, 100% {
+    box-shadow:
+      var(--shadow-focus),
+      var(--status-incubating-glow);
+  }
+  50% {
+    box-shadow:
+      var(--shadow-focus),
+      var(--status-incubating-glow-bright);
+  }
+}
+
+/* ========================================
+ * Type-specific Icon Colors
+ * ======================================== */
+.doc-card[data-type="framework"] .doc-card__icon {
+  color: var(--color-framework);
+}
+
+.doc-card[data-type="instance"] .doc-card__icon {
+  color: var(--color-instance);
+}
+
+.doc-card[data-type="note"] .doc-card__icon {
+  color: var(--color-note);
+}
+
+.doc-card[data-type="source"] .doc-card__icon {
+  color: var(--color-source);
+}
+
+.doc-card[data-type="index"] .doc-card__icon {
+  color: var(--color-index);
+}
+
+/* ========================================
+ * Skeleton Loading State
+ * ======================================== */
+.doc-card--skeleton {
+  pointer-events: none;
+}
+
+.doc-card__skeleton-icon,
+.doc-card__skeleton-title,
+.doc-card__skeleton-badge,
+.doc-card__skeleton-time {
+  background: linear-gradient(
+    90deg,
+    var(--bg-subtle) 0%,
+    var(--bg-elevated) 50%,
+    var(--bg-subtle) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  border-radius: var(--radius-sm);
+}
+
+.doc-card__skeleton-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.doc-card__skeleton-title {
+  height: 1rem;
+  width: 70%;
+  margin-bottom: var(--space-xs);
+}
+
+.doc-card__skeleton-badge {
+  height: 0.75rem;
+  width: 40%;
+}
+
+.doc-card__skeleton-time {
+  width: 3rem;
+  height: 0.875rem;
+}
+
+@keyframes skeleton-shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
