@@ -1,5 +1,5 @@
 import type { Document } from '../types.ts';
-import { getDocumentIcon, getDocumentColor } from '../types.ts';
+import { getDocumentIcon, getDocumentColor, getIntentIcon, getExecutionDots } from '../types.ts';
 import { relativeTime } from '../utils/time.ts';
 
 export interface DocumentCardOptions {
@@ -27,6 +27,13 @@ export function createDocumentCard(
   icon.textContent = getDocumentIcon(doc);
   icon.style.color = getDocumentColor(doc);
   card.appendChild(icon);
+
+  // Intent icon
+  const intentIcon = document.createElement('span');
+  intentIcon.className = 'doc-card__intent';
+  intentIcon.textContent = getIntentIcon(doc);
+  intentIcon.title = doc.intent ?? 'capture';
+  card.appendChild(intentIcon);
 
   // Content area
   const content = document.createElement('div');
@@ -60,6 +67,28 @@ export function createDocumentCard(
   }
 
   card.appendChild(content);
+
+  // Execution state dots
+  const stateDots = document.createElement('span');
+  stateDots.className = 'doc-card__state';
+  stateDots.textContent = getExecutionDots(doc);
+  stateDots.title = doc.execution_state ?? 'pending';
+  stateDots.dataset.state = doc.execution_state ?? 'pending';
+  card.appendChild(stateDots);
+
+  // Upstream/downstream counts
+  const upstreamCount = doc.upstream?.length ?? 0;
+  const downstreamCount = doc.downstream?.length ?? 0;
+  if (upstreamCount > 0 || downstreamCount > 0) {
+    const relations = document.createElement('span');
+    relations.className = 'doc-card__relations';
+    const parts: string[] = [];
+    if (upstreamCount > 0) parts.push(`⤴${upstreamCount}`);
+    if (downstreamCount > 0) parts.push(`↴${downstreamCount}`);
+    relations.textContent = parts.join(' ');
+    relations.title = `${upstreamCount} upstream, ${downstreamCount} downstream`;
+    card.appendChild(relations);
+  }
 
   // Timestamp
   const time = document.createElement('div');

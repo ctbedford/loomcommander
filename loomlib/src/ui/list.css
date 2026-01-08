@@ -44,6 +44,76 @@
 }
 
 /* ========================================
+ * Filter Chips
+ * ======================================== */
+.list-view__filters {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-top: var(--space-sm);
+}
+
+.list-view__filter-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.list-view__chip {
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.list-view__chip:hover {
+  background: var(--bg-subtle);
+  border-color: var(--border-focus);
+  color: var(--text);
+}
+
+.list-view__chip--active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: oklch(100% 0 0);
+}
+
+.list-view__chip--active:hover {
+  filter: brightness(1.1);
+}
+
+/* State chip specific styling */
+.list-view__chip--state {
+  letter-spacing: -0.05em;
+}
+
+.list-view__chip--state[data-state="in_progress"]:not(.list-view__chip--active) {
+  color: var(--color-instance);
+}
+
+.list-view__chip--state[data-state="completed"]:not(.list-view__chip--active) {
+  color: var(--color-source);
+}
+
+.list-view__chip--state[data-state="resolved"]:not(.list-view__chip--active) {
+  color: var(--color-framework);
+}
+
+/* Intent chip - slightly larger for emoji */
+.list-view__chip--intent {
+  font-family: var(--font-sans);
+  font-size: var(--font-size-sm);
+}
+
+/* ========================================
  * Document List
  * ======================================== */
 .list-view__list {

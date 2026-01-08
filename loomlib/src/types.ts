@@ -51,7 +51,7 @@ export interface SemanticSlotState {
   totalCount: number;
 }
 
-// Legacy 4-category types (kept for backward compatibility)
+// Simplified 4-category types (now primary)
 export type RelationshipCategory = 'parent' | 'child' | 'sibling' | 'distant';
 
 export interface SlotState {
@@ -101,6 +101,34 @@ export type FrameworkKind = 'toolkit' | 'domain';
 // Document status
 export type DocumentStatus = 'incubating' | 'draft' | 'verified' | 'captured';
 
+// ─────────────────────────────────────────────────────────────────────
+// CONDUCTING FRONTMATTER - Production flow tracking
+// ─────────────────────────────────────────────────────────────────────
+
+// Intent: what kind of production is this?
+export type DocumentIntent = 'research' | 'build' | 'capture' | 'organize' | 'produce';
+
+// Execution state: where is this in its lifecycle?
+export type ExecutionState = 'pending' | 'in_progress' | 'completed' | 'resolved';
+
+// Upstream/downstream relation types
+export type RelationType = 'informs' | 'method' | 'source' | 'prior' | 'defines';
+
+// Upstream reference: what informed this document
+export interface UpstreamRef {
+  doc: string;
+  relation: RelationType;
+}
+
+// Default intent by document type
+export const DEFAULT_INTENT: Record<DocumentType, DocumentIntent> = {
+  source: 'capture',
+  note: 'capture',
+  framework: 'build',
+  instance: 'produce',
+  index: 'organize',
+};
+
 // Depth layers for constellation view
 export type DepthLayer = 'focus' | 'context' | 'distant';
 
@@ -119,6 +147,11 @@ export interface Document {
   tags: string[];
   createdAt: number;
   modifiedAt: number;
+  // Conducting fields (optional for backward compatibility)
+  intent?: DocumentIntent;
+  execution_state?: ExecutionState;
+  upstream?: UpstreamRef[];
+  downstream?: UpstreamRef[];
 }
 
 // Graph node for constellation view
@@ -146,6 +179,33 @@ export const TYPE_ICONS: Record<DocumentType, string> = {
   source: '◈',
   index: '☰',
 };
+
+// Intent icons for conducting frontmatter
+export const INTENT_ICONS: Record<DocumentIntent, string> = {
+  research: '🔬',
+  build: '🔨',
+  capture: '📝',
+  organize: '📁',
+  produce: '⚡',
+};
+
+// Execution state display
+export const EXECUTION_STATE_DOTS: Record<ExecutionState, string> = {
+  pending: '○○○○',
+  in_progress: '●●○○',
+  completed: '●●●●',
+  resolved: '✓',
+};
+
+// Get intent icon for document
+export function getIntentIcon(doc: Document): string {
+  return INTENT_ICONS[doc.intent ?? DEFAULT_INTENT[doc.type]];
+}
+
+// Get execution state dots for document
+export function getExecutionDots(doc: Document): string {
+  return EXECUTION_STATE_DOTS[doc.execution_state ?? 'pending'];
+}
 
 export const TYPE_COLORS: Record<DocumentType, string> = {
   framework: '#7BA3C9', // pale blue
@@ -185,6 +245,11 @@ export function createEmptyDocument(type: DocumentType = 'note'): Document {
     tags: [],
     createdAt: now,
     modifiedAt: now,
+    // Conducting defaults
+    intent: DEFAULT_INTENT[type],
+    execution_state: 'pending',
+    upstream: [],
+    downstream: [],
   };
 }
 

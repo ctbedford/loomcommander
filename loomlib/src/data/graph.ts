@@ -11,21 +11,33 @@ import type {
   ProductionFormula,
 } from '../types.ts';
 
-// Compute edges from framework_ids relationships
+// Get parent doc IDs from upstream (preferred) or legacy fields (fallback)
+export function getParentIds(doc: Document): string[] {
+  // Prefer upstream if it has entries
+  if (doc.upstream && doc.upstream.length > 0) {
+    return doc.upstream.map(ref => ref.doc);
+  }
+
+  // Fallback to legacy fields
+  const ids: string[] = [...doc.framework_ids];
+  if (doc.source_id) {
+    ids.push(doc.source_id);
+  }
+  return ids;
+}
+
+// Compute edges from upstream (preferred) or framework_ids (fallback)
 export function computeEdges(docs: Document[]): GraphEdge[] {
   const edges: GraphEdge[] = [];
   const docIds = new Set(docs.map((d) => d.id));
 
   for (const doc of docs) {
-    // Instance -> Framework edges
-    for (const frameworkId of doc.framework_ids) {
-      if (docIds.has(frameworkId)) {
-        edges.push({ source: doc.id, target: frameworkId });
+    // Get parent IDs from upstream or legacy fields
+    const parentIds = getParentIds(doc);
+    for (const parentId of parentIds) {
+      if (docIds.has(parentId)) {
+        edges.push({ source: doc.id, target: parentId });
       }
-    }
-    // Note -> Source edge
-    if (doc.source_id && docIds.has(doc.source_id)) {
-      edges.push({ source: doc.id, target: doc.source_id });
     }
   }
 
@@ -64,23 +76,18 @@ export function computeLayers(
   // Focus document
   layers.set(focusedId, 'focus');
 
-  // Parents: documents that focus references via framework_ids or source_id
-  for (const frameworkId of focusDoc.framework_ids) {
-    if (docMap.has(frameworkId)) {
-      contextIds.add(frameworkId);
+  // Parents: documents that focus references via upstream (or legacy fields)
+  const parentIds = getParentIds(focusDoc);
+  for (const parentId of parentIds) {
+    if (docMap.has(parentId)) {
+      contextIds.add(parentId);
     }
-  }
-  if (focusDoc.source_id && docMap.has(focusDoc.source_id)) {
-    contextIds.add(focusDoc.source_id);
   }
 
-  // Children: documents whose framework_ids include focus's id
+  // Children: documents whose upstream (or legacy fields) include focus's id
   for (const doc of docs) {
-    if (doc.framework_ids.includes(focusedId)) {
-      contextIds.add(doc.id);
-    }
-    // Also include notes that reference focus as source
-    if (doc.source_id === focusedId) {
+    const docParentIds = getParentIds(doc);
+    if (docParentIds.includes(focusedId)) {
       contextIds.add(doc.id);
     }
   }
@@ -159,24 +166,40 @@ export function computePositions(
   const siblings: Document[] = [];
   const distant: Document[] = [];
 
+  // Get focus's parent IDs (upstream-first)
+  const focusParentIds = getParentIds(focusDoc);
+  // Determine parent relation types from upstream if available
+  const parentRelations = new Map<string, string>();
+  if (focusDoc.upstream && focusDoc.upstream.length > 0) {
+    for (const ref of focusDoc.upstream) {
+      parentRelations.set(ref.doc, ref.relation);
+    }
+  }
+
   for (const doc of docs) {
     if (doc.id === focusedId) continue;
 
-    const isParent = focusDoc.framework_ids.includes(doc.id);
-    const isSourceParent = focusDoc.source_id === doc.id;
-    const isChild = doc.framework_ids.includes(focusedId) || doc.source_id === focusedId;
+    // Check if doc is a parent using upstream-first approach
+    const isParent = focusParentIds.includes(doc.id);
+
+    // Check if doc is a child (uses upstream-first for this doc)
+    const docParentIds = getParentIds(doc);
+    const isChild = docParentIds.includes(focusedId);
+
     const isSibling =
       (focusDoc.perspective && doc.perspective === focusDoc.perspective) ||
       (focusDoc.output && doc.output === focusDoc.output);
 
     if (isParent) {
-      if (doc.framework_kind === 'domain') {
+      // Categorize parent by type: check upstream relation, or fall back to framework_kind
+      const relation = parentRelations.get(doc.id);
+      if (relation === 'source' || focusDoc.source_id === doc.id) {
+        sourceParents.push(doc);
+      } else if (doc.framework_kind === 'domain') {
         domainParents.push(doc);
       } else {
         toolkitParents.push(doc);
       }
-    } else if (isSourceParent) {
-      sourceParents.push(doc);
     } else if (isChild) {
       children.push(doc);
     } else if (isSibling) {
@@ -282,21 +305,20 @@ export function getRelatedDocs(
   const children: Document[] = [];
   const siblings: Document[] = [];
 
-  // Parents
-  for (const frameworkId of focusDoc.framework_ids) {
-    const parent = docMap.get(frameworkId);
+  // Parents (upstream-first)
+  const parentIds = getParentIds(focusDoc);
+  for (const parentId of parentIds) {
+    const parent = docMap.get(parentId);
     if (parent) parents.push(parent);
-  }
-  if (focusDoc.source_id) {
-    const source = docMap.get(focusDoc.source_id);
-    if (source) parents.push(source);
   }
 
   // Children and siblings
   for (const doc of docs) {
     if (doc.id === focusedId) continue;
 
-    if (doc.framework_ids.includes(focusedId) || doc.source_id === focusedId) {
+    // Check if this doc references focus (upstream-first)
+    const docParentIds = getParentIds(doc);
+    if (docParentIds.includes(focusedId)) {
       children.push(doc);
     } else if (
       (focusDoc.perspective && doc.perspective === focusDoc.perspective) ||
@@ -344,16 +366,18 @@ export function categorizeDocs(
     return result;
   }
 
+  // Get focus's parent IDs (upstream-first)
+  const focusParentIds = getParentIds(focusDoc);
+
   for (const doc of docs) {
     if (doc.id === focusedId) continue;
 
-    const isParent =
-      focusDoc.framework_ids.includes(doc.id) ||
-      focusDoc.source_id === doc.id;
+    // Parent: focus references this doc via upstream (or legacy fields)
+    const isParent = focusParentIds.includes(doc.id);
 
-    const isChild =
-      doc.framework_ids.includes(focusedId) ||
-      doc.source_id === focusedId;
+    // Child: this doc references focus via its upstream (or legacy fields)
+    const docParentIds = getParentIds(doc);
+    const isChild = docParentIds.includes(focusedId);
 
     const isSibling =
       (focusDoc.perspective && doc.perspective === focusDoc.perspective) ||

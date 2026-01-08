@@ -55,6 +55,13 @@
   border-color: var(--border-focus);
 }
 
+/* Actions group */
+.editor-view__actions {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.editor-view__preview-toggle,
 .editor-view__triage-btn {
   padding: var(--space-xs) var(--space-sm);
   border: 1px solid var(--border);
@@ -65,12 +72,25 @@
   cursor: pointer;
   transition:
     background var(--transition-fast),
-    color var(--transition-fast);
+    color var(--transition-fast),
+    border-color var(--transition-fast);
 }
 
+.editor-view__preview-toggle:hover,
 .editor-view__triage-btn:hover {
   background: var(--bg-subtle);
   color: var(--text);
+}
+
+.editor-view__preview-toggle--active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: oklch(100% 0 0);
+}
+
+.editor-view__preview-toggle--active:hover {
+  background: var(--accent);
+  filter: brightness(1.1);
 }
 
 /* Title area */
@@ -110,6 +130,11 @@
   font-size: var(--font-size-base);
 }
 
+.editor-view__intent {
+  font-size: var(--font-size-sm);
+  opacity: 0.8;
+}
+
 .editor-view__type-label {
   font-size: var(--font-size-xs);
   color: var(--text-muted);
@@ -143,6 +168,40 @@
   color: var(--color-framework);
 }
 
+/* ========================================
+ * Execution State Dots
+ * ======================================== */
+.editor-view__execution {
+  font-size: var(--font-size-xs);
+  font-family: var(--font-mono);
+  letter-spacing: -0.05em;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+}
+
+.editor-view__execution:hover {
+  background: var(--bg-elevated);
+}
+
+.editor-view__execution--pending {
+  opacity: 0.5;
+}
+
+.editor-view__execution--in_progress {
+  color: var(--color-instance);
+}
+
+.editor-view__execution--completed {
+  color: var(--color-source);
+}
+
+.editor-view__execution--resolved {
+  color: var(--color-framework);
+}
+
 .editor-view__tags {
   display: flex;
   gap: var(--space-xs);
@@ -155,6 +214,51 @@
   border-radius: var(--radius-sm);
   background: var(--bg-elevated);
   color: var(--text-muted);
+}
+
+/* ========================================
+ * Relations Bar (upstream/downstream)
+ * ======================================== */
+.editor-view__relations {
+  display: none;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-xs) var(--space-md);
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  min-height: 28px;
+  font-size: var(--font-size-xs);
+  overflow-x: auto;
+}
+
+.editor-view__rel-label {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.editor-view__rel-link {
+  color: var(--text);
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+  white-space: nowrap;
+}
+
+.editor-view__rel-link:hover {
+  background: var(--bg-subtle);
+  color: var(--accent);
+}
+
+.editor-view__rel-divider {
+  color: var(--text-muted);
+  margin: 0 var(--space-xs);
+}
+
+.editor-view__rel-downstream {
+  color: var(--text-muted);
+  white-space: nowrap;
 }
 
 /* ========================================
@@ -200,8 +304,15 @@
 }
 
 /* ========================================
- * Textarea - The writing surface
+ * Content Area - Textarea and Preview
  * ======================================== */
+.editor-view__content {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .editor-view__textarea {
   flex: 1;
   padding: var(--space-lg);
@@ -230,14 +341,157 @@
 }
 
 /* ========================================
+ * Preview Pane
+ * ======================================== */
+.editor-view__preview {
+  display: none;
+  flex: 1;
+  padding: var(--space-lg);
+  overflow-y: auto;
+  border-left: 1px solid var(--border);
+  background: var(--bg);
+
+  /* Typography */
+  font-family: var(--font-sans);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height);
+  color: var(--text);
+}
+
+/* Show preview in preview mode */
+.editor-view--preview .editor-view__preview {
+  display: block;
+}
+
+/* Preview content styling */
+.editor-view__preview h1,
+.editor-view__preview h2,
+.editor-view__preview h3,
+.editor-view__preview h4,
+.editor-view__preview h5,
+.editor-view__preview h6 {
+  margin: 1.5em 0 0.5em;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text);
+}
+
+.editor-view__preview h1 { font-size: 1.75em; }
+.editor-view__preview h2 { font-size: 1.5em; }
+.editor-view__preview h3 { font-size: 1.25em; }
+.editor-view__preview h4 { font-size: 1.1em; }
+
+.editor-view__preview h1:first-child,
+.editor-view__preview h2:first-child,
+.editor-view__preview h3:first-child {
+  margin-top: 0;
+}
+
+.editor-view__preview p {
+  margin: 0 0 1em;
+}
+
+.editor-view__preview ul,
+.editor-view__preview ol {
+  margin: 0 0 1em;
+  padding-left: 1.5em;
+}
+
+.editor-view__preview li {
+  margin: 0.25em 0;
+}
+
+.editor-view__preview code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  padding: 0.15em 0.4em;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-sm);
+}
+
+.editor-view__preview pre {
+  margin: 0 0 1em;
+  padding: var(--space-md);
+  background: var(--bg-elevated);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+}
+
+.editor-view__preview pre code {
+  padding: 0;
+  background: none;
+  font-size: var(--font-size-sm);
+}
+
+.editor-view__preview blockquote {
+  margin: 0 0 1em;
+  padding: 0 0 0 var(--space-md);
+  border-left: 3px solid var(--border);
+  color: var(--text-muted);
+}
+
+.editor-view__preview table {
+  width: 100%;
+  margin: 0 0 1em;
+  border-collapse: collapse;
+}
+
+.editor-view__preview th,
+.editor-view__preview td {
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--border);
+  text-align: left;
+}
+
+.editor-view__preview th {
+  background: var(--bg-subtle);
+  font-weight: 600;
+}
+
+.editor-view__preview a {
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.editor-view__preview a:hover {
+  text-decoration: underline;
+}
+
+.editor-view__preview hr {
+  margin: 1.5em 0;
+  border: none;
+  border-top: 1px solid var(--border);
+}
+
+.editor-view__preview strong {
+  font-weight: 600;
+}
+
+.editor-view__preview em {
+  font-style: italic;
+}
+
+/* ========================================
  * Focus Mode - Full-screen writing
  * ======================================== */
-.editor-view--focus .editor-view__header {
+.editor-view--focus .editor-view__header,
+.editor-view--focus .editor-view__meta,
+.editor-view--focus .editor-view__relations {
   display: none;
+}
+
+.editor-view--focus .editor-view__content {
+  flex-direction: column;
+  align-items: center;
 }
 
 .editor-view--focus .editor-view__textarea {
   padding: var(--space-xl);
   max-width: 720px;
-  margin: 0 auto;
+  width: 100%;
+}
+
+/* Hide preview in focus mode */
+.editor-view--focus .editor-view__preview {
+  display: none;
 }

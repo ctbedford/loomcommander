@@ -49,6 +49,54 @@
 }
 
 /* ========================================
+ * Intent Icon
+ * ======================================== */
+.doc-card__intent {
+  font-size: var(--font-size-sm);
+  line-height: 1;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+/* ========================================
+ * Execution State Dots
+ * ======================================== */
+.doc-card__state {
+  font-size: var(--font-size-xs);
+  letter-spacing: -0.05em;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+}
+
+.doc-card__state[data-state="pending"] {
+  opacity: 0.5;
+}
+
+.doc-card__state[data-state="in_progress"] {
+  color: var(--color-instance);
+}
+
+.doc-card__state[data-state="completed"] {
+  color: var(--color-source);
+}
+
+.doc-card__state[data-state="resolved"] {
+  color: var(--color-framework);
+  font-size: var(--font-size-sm);
+}
+
+/* ========================================
+ * Upstream/Downstream Relations
+ * ======================================== */
+.doc-card__relations {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+/* ========================================
  * Content Area
  * ======================================== */
 .doc-card__content {

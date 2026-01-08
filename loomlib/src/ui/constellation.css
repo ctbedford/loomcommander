@@ -79,6 +79,64 @@
 }
 
 /* ========================================
+ * Colored Tethers by Relationship Type
+ * ======================================== */
+
+/* Toolkit parent - blue */
+.tether--toolkit {
+  stroke: #6b9fff;
+}
+
+.tether--toolkit.tether--focused {
+  stroke: #6b9fff;
+}
+
+/* Domain parent - purple */
+.tether--domain {
+  stroke: #a78bfa;
+}
+
+.tether--domain.tether--focused {
+  stroke: #a78bfa;
+}
+
+/* Source parent - green */
+.tether--source {
+  stroke: #34d399;
+}
+
+.tether--source.tether--focused {
+  stroke: #34d399;
+}
+
+/* Child - amber/warm */
+.tether--child {
+  stroke: var(--color-instance);
+}
+
+.tether--child.tether--focused {
+  stroke: var(--color-instance);
+}
+
+/* Channel sibling - cyan */
+.tether--channel {
+  stroke: #22d3ee;
+}
+
+.tether--channel.tether--focused {
+  stroke: #22d3ee;
+}
+
+/* Perspective sibling - rose */
+.tether--perspective {
+  stroke: #f472b6;
+}
+
+.tether--perspective.tether--focused {
+  stroke: #f472b6;
+}
+
+/* ========================================
  * Canvas for Nodes
  * ======================================== */
 .constellation-canvas {
@@ -112,6 +170,8 @@
   cursor: pointer;
 
   transition:
+    left var(--transition-slow),
+    top var(--transition-slow),
     transform var(--transition-slow),
     filter var(--transition-slow),
     opacity var(--transition-slow),
@@ -137,6 +197,47 @@
 .constellation-node[data-layer="focus"] .constellation-node__icon {
   font-size: 1.5rem;
   opacity: 1;
+}
+
+/* ========================================
+ * Node Intent Icon
+ * ======================================== */
+.constellation-node__intent {
+  font-size: var(--font-size-xs);
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.constellation-node[data-layer="focus"] .constellation-node__intent {
+  font-size: var(--font-size-sm);
+}
+
+/* ========================================
+ * Node Execution State
+ * ======================================== */
+.constellation-node__state {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  letter-spacing: -0.05em;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.constellation-node__state[data-state="pending"] {
+  opacity: 0.4;
+}
+
+.constellation-node__state[data-state="in_progress"] {
+  color: var(--color-instance);
+}
+
+.constellation-node__state[data-state="completed"] {
+  color: var(--color-source);
+}
+
+.constellation-node__state[data-state="resolved"] {
+  color: var(--color-framework);
 }
 
 /* ========================================
@@ -443,45 +544,23 @@
   margin-right: 4px;
 }
 
-/* Positions for 8 semantic categories */
-.constellation-slot-indicator--toolkitParent {
-  top: 50%;
-  left: 3%;
-  transform: translateY(-50%);
-}
-
-.constellation-slot-indicator--domainParent {
-  top: 50%;
-  right: 3%;
-  transform: translateY(-50%);
-}
-
-.constellation-slot-indicator--sourceParent {
-  top: 12%;
+/* Positions for 4 simplified categories */
+.constellation-slot-indicator--parent {
+  top: 20%;
   left: 50%;
   transform: translateX(-50%);
 }
 
 .constellation-slot-indicator--child {
-  bottom: 38%;
+  bottom: 35%;
   left: 50%;
   transform: translateX(-50%);
 }
 
-.constellation-slot-indicator--formulaSibling {
+.constellation-slot-indicator--sibling {
   bottom: 18%;
   left: 50%;
   transform: translateX(-50%);
-}
-
-.constellation-slot-indicator--channelSibling {
-  bottom: 28%;
-  right: 12%;
-}
-
-.constellation-slot-indicator--perspectiveSibling {
-  bottom: 28%;
-  left: 12%;
 }
 
 .constellation-slot-indicator--distant {

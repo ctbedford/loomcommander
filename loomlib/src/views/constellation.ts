@@ -2,25 +2,27 @@ import type {
   Document,
   GraphNode,
   GraphEdge,
-  SemanticCategory,
-  SemanticSlotLimits,
-  SemanticCategorizedDocs,
+  RelationshipCategory,
+  SlotLimits,
   LensId,
 } from '../types.ts';
-import { getDocumentIcon, getDocumentColor } from '../types.ts';
+import type { CategorizedDocs } from '../data/graph.ts';
+import { getDocumentIcon, getDocumentColor, getIntentIcon, getExecutionDots } from '../types.ts';
 import { listDocuments } from '../data/documents.ts';
 import {
   computeGraph,
-  categorizeDocsSemantic,
-  computeVisibleDocsSemantic,
+  categorizeDocs,
+  computeVisibleDocs,
   getProductionFormula,
+  getParentIds,
 } from '../data/graph.ts';
 import {
-  getAdaptiveSemanticLimits,
+  getAdaptiveLimits,
   getLensById,
-  SEMANTIC_CATEGORY_ORDER,
-  DEFAULT_SEMANTIC_SLOT_LIMITS,
+  DEFAULT_SLOT_LIMITS,
 } from '../data/constellation-config.ts';
+
+const CATEGORY_ORDER: RelationshipCategory[] = ['parent', 'child', 'sibling', 'distant'];
 import { LensPicker } from '../components/lens-picker.ts';
 import { FormulaBar } from '../components/formula-bar.ts';
 
@@ -43,24 +45,19 @@ export class ConstellationView {
   private focusedIndex = 0;
   private hidePreviewTimeout: number | null = null;
 
-  // Click/double-click disambiguation
-  private clickTimer: number | null = null;
-  private readonly CLICK_DELAY = 250; // ms - standard double-click threshold
+  // DOM element cache for animation (keeps nodes between renders)
+  private nodeElements: Map<string, HTMLElement> = new Map();
 
-  // Slot system state (semantic categories)
-  private slotOffsets: Record<SemanticCategory, number> = {
-    toolkitParent: 0,
-    domainParent: 0,
-    sourceParent: 0,
+  // Slot system state (simplified 4 categories)
+  private slotOffsets: Record<RelationshipCategory, number> = {
+    parent: 0,
     child: 0,
-    formulaSibling: 0,
-    channelSibling: 0,
-    perspectiveSibling: 0,
+    sibling: 0,
     distant: 0,
   };
-  private slotLimits: SemanticSlotLimits = DEFAULT_SEMANTIC_SLOT_LIMITS;
-  private categorizedDocs: SemanticCategorizedDocs | null = null;
-  private activeSlot: SemanticCategory = 'child';
+  private slotLimits: SlotLimits = DEFAULT_SLOT_LIMITS;
+  private categorizedDocs: CategorizedDocs | null = null;
+  private activeSlot: RelationshipCategory = 'child';
 
   // Lens system state
   private activeLens: LensId = 'default';
@@ -136,6 +133,10 @@ export class ConstellationView {
       this.focusedIndex = 0;
     }
 
+    // Clear node cache on data refresh (documents may have changed)
+    this.nodeElements.clear();
+    this.canvas.innerHTML = '';
+
     this.computeLayout();
     this.render();
   }
@@ -166,10 +167,10 @@ export class ConstellationView {
     }
 
     // Get adaptive limits based on doc count
-    this.slotLimits = getAdaptiveSemanticLimits(filteredDocs.length);
+    this.slotLimits = getAdaptiveLimits(filteredDocs.length);
 
-    // Categorize all docs using semantic categories
-    this.categorizedDocs = categorizeDocsSemantic(filteredDocs, this.focusedId);
+    // Categorize all docs using simplified 4 categories
+    this.categorizedDocs = categorizeDocs(filteredDocs, this.focusedId);
 
     // Update formula bar
     if (focusDoc && this.focusedId) {
@@ -180,7 +181,7 @@ export class ConstellationView {
     }
 
     // Get visible subset based on offsets
-    const visibleDocs = computeVisibleDocsSemantic(
+    const visibleDocs = computeVisibleDocs(
       this.categorizedDocs,
       this.slotLimits,
       this.slotOffsets
@@ -189,13 +190,9 @@ export class ConstellationView {
     // Compute graph with only visible docs (plus focus)
     const allVisible = [
       ...(focusDoc ? [focusDoc] : []),
-      ...visibleDocs.toolkitParent,
-      ...visibleDocs.domainParent,
-      ...visibleDocs.sourceParent,
+      ...visibleDocs.parent,
       ...visibleDocs.child,
-      ...visibleDocs.formulaSibling,
-      ...visibleDocs.channelSibling,
-      ...visibleDocs.perspectiveSibling,
+      ...visibleDocs.sibling,
       ...visibleDocs.distant,
     ];
 
@@ -229,6 +226,7 @@ export class ConstellationView {
 
     // Create node position map
     const nodeMap = new Map(this.nodes.map((n) => [n.doc.id, n]));
+    const focusDoc = this.docs.find(d => d.id === this.focusedId);
 
     // Render edges - only those connected to focus
     for (const edge of this.edges) {
@@ -249,6 +247,15 @@ export class ConstellationView {
       line.setAttribute('y2', String(targetNode.y));
       line.setAttribute('class', 'tether');
 
+      // Determine relationship type for coloring
+      if (focusDoc) {
+        const otherDoc = sourceNode.doc.id === this.focusedId ? targetNode.doc : sourceNode.doc;
+        const relType = this.getTetherRelationType(focusDoc, otherDoc);
+        if (relType) {
+          line.classList.add(`tether--${relType}`);
+        }
+      }
+
       // Highlight tethers connected to focus
       if (sourceNode.doc.id === this.focusedId || targetNode.doc.id === this.focusedId) {
         line.classList.add('tether--focused');
@@ -258,12 +265,65 @@ export class ConstellationView {
     }
   }
 
-  private renderNodes(): void {
-    this.canvas.innerHTML = '';
+  private getTetherRelationType(focusDoc: Document, otherDoc: Document): string | null {
+    // Check if other doc is a parent (focus references it via upstream or legacy fields)
+    const focusParentIds = getParentIds(focusDoc);
+    if (focusParentIds.includes(otherDoc.id)) {
+      // Determine specific parent type from upstream relation or fall back to framework_kind
+      if (focusDoc.upstream && focusDoc.upstream.length > 0) {
+        const ref = focusDoc.upstream.find(r => r.doc === otherDoc.id);
+        if (ref?.relation === 'source') return 'source';
+      }
+      // Fallback: check legacy source_id
+      if (focusDoc.source_id === otherDoc.id) return 'source';
+      // Otherwise categorize by framework_kind
+      return otherDoc.framework_kind === 'domain' ? 'domain' : 'toolkit';
+    }
 
+    // Check if other doc is a child (it references focus via upstream or legacy fields)
+    const otherParentIds = getParentIds(otherDoc);
+    if (otherParentIds.includes(focusDoc.id)) {
+      return 'child';
+    }
+
+    // Check siblings
+    if (focusDoc.perspective && otherDoc.perspective === focusDoc.perspective) {
+      return 'perspective';
+    }
+    if (focusDoc.output && otherDoc.output === focusDoc.output) {
+      return 'channel';
+    }
+
+    return null;
+  }
+
+  private renderNodes(): void {
+    const currentIds = new Set(this.nodes.map(n => n.doc.id));
+
+    // Remove nodes that are no longer visible
+    for (const [id, element] of this.nodeElements) {
+      if (!currentIds.has(id)) {
+        element.remove();
+        this.nodeElements.delete(id);
+      }
+    }
+
+    // Update or create nodes
     for (const node of this.nodes) {
-      const card = this.createNodeCard(node);
-      this.canvas.appendChild(card);
+      let card = this.nodeElements.get(node.doc.id);
+
+      if (card) {
+        // Update existing node position and layer (CSS will animate)
+        card.style.left = `${node.x}px`;
+        card.style.top = `${node.y}px`;
+        card.dataset.layer = node.layer;
+        card.dataset.status = node.doc.status;
+      } else {
+        // Create new node
+        card = this.createNodeCard(node);
+        this.canvas.appendChild(card);
+        this.nodeElements.set(node.doc.id, card);
+      }
     }
   }
 
@@ -273,7 +333,7 @@ export class ConstellationView {
 
     if (!this.categorizedDocs) return;
 
-    for (const cat of SEMANTIC_CATEGORY_ORDER) {
+    for (const cat of CATEGORY_ORDER) {
       const total = this.categorizedDocs[cat].length;
       const max = this.slotLimits[cat];
       const offset = this.slotOffsets[cat];
@@ -287,14 +347,10 @@ export class ConstellationView {
       }
 
       // Human-readable category names
-      const categoryNames: Record<SemanticCategory, string> = {
-        toolkitParent: 'Toolkit',
-        domainParent: 'Domain',
-        sourceParent: 'Source',
+      const categoryNames: Record<RelationshipCategory, string> = {
+        parent: 'Parents',
         child: 'Children',
-        formulaSibling: 'Formula',
-        channelSibling: 'Channel',
-        perspectiveSibling: 'Perspective',
+        sibling: 'Siblings',
         distant: 'Distant',
       };
 
@@ -321,7 +377,7 @@ export class ConstellationView {
     }
   }
 
-  private scrollSlot(category: SemanticCategory, direction: -1 | 1): void {
+  private scrollSlot(category: RelationshipCategory, direction: -1 | 1): void {
     if (!this.categorizedDocs) return;
 
     const total = this.categorizedDocs[category].length;
@@ -338,9 +394,9 @@ export class ConstellationView {
   }
 
   private cycleActiveSlot(direction: -1 | 1): void {
-    const currentIndex = SEMANTIC_CATEGORY_ORDER.indexOf(this.activeSlot);
-    const newIndex = (currentIndex + direction + SEMANTIC_CATEGORY_ORDER.length) % SEMANTIC_CATEGORY_ORDER.length;
-    this.activeSlot = SEMANTIC_CATEGORY_ORDER[newIndex];
+    const currentIndex = CATEGORY_ORDER.indexOf(this.activeSlot);
+    const newIndex = (currentIndex + direction + CATEGORY_ORDER.length) % CATEGORY_ORDER.length;
+    this.activeSlot = CATEGORY_ORDER[newIndex];
     this.render(); // re-render to highlight active slot
   }
 
@@ -360,13 +416,9 @@ export class ConstellationView {
 
     // Reset scroll offsets when changing lens
     this.slotOffsets = {
-      toolkitParent: 0,
-      domainParent: 0,
-      sourceParent: 0,
+      parent: 0,
       child: 0,
-      formulaSibling: 0,
-      channelSibling: 0,
-      perspectiveSibling: 0,
+      sibling: 0,
       distant: 0,
     };
 
@@ -392,6 +444,7 @@ export class ConstellationView {
     card.dataset.id = node.doc.id;
     card.dataset.layer = node.layer;
     card.dataset.status = node.doc.status;
+    card.dataset.executionState = node.doc.execution_state ?? 'pending';
 
     // Position
     card.style.left = `${node.x}px`;
@@ -404,28 +457,41 @@ export class ConstellationView {
     icon.style.color = getDocumentColor(node.doc);
     card.appendChild(icon);
 
+    // Intent icon
+    const intentIcon = document.createElement('span');
+    intentIcon.className = 'constellation-node__intent';
+    intentIcon.textContent = getIntentIcon(node.doc);
+    card.appendChild(intentIcon);
+
     // Title
     const title = document.createElement('span');
     title.className = 'constellation-node__title';
     title.textContent = node.doc.title || 'Untitled';
     card.appendChild(title);
 
-    // Unified click handler with double-click disambiguation
-    // Prevents the "rapid clicks needed" issue where 2 clicks + 1 dblclick fire
+    // Execution state dots
+    const stateDots = document.createElement('span');
+    stateDots.className = 'constellation-node__state';
+    stateDots.textContent = getExecutionDots(node.doc);
+    stateDots.dataset.state = node.doc.execution_state ?? 'pending';
+    card.appendChild(stateDots);
+
+    // Click immediately focuses (no delay)
+    // Double-click opens document
     card.addEventListener('click', () => {
-      if (this.clickTimer !== null) {
-        // Second click within delay = double-click intent
-        clearTimeout(this.clickTimer);
-        this.clickTimer = null;
+      // If clicking the already-focused node, open it
+      if (node.doc.id === this.focusedId) {
         this.options.onDocumentOpen(node.doc);
       } else {
-        // First click - wait to see if double-click follows
-        this.clickTimer = window.setTimeout(() => {
-          this.clickTimer = null;
-          this.setFocus(node.doc.id);
-          this.options.onDocumentSelect(node.doc);
-        }, this.CLICK_DELAY);
+        // Focus new node immediately
+        this.setFocus(node.doc.id);
+        this.options.onDocumentSelect(node.doc);
       }
+    });
+
+    // Native double-click also opens (works on any node)
+    card.addEventListener('dblclick', () => {
+      this.options.onDocumentOpen(node.doc);
     });
 
     // Hover preview for all nodes
