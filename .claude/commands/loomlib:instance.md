@@ -37,18 +37,68 @@ Operators structure how terms relate. Choose based on what the relation reveals:
 | **AND** | System/causal loop | CREDIT AND DEBT |
 | **OR** | False binary to dissolve | NATURE OR NURTURE |
 
+## Discovery (before Production)
+
+Query the loomlib API to find related documents before producing.
+
+### 1. Check for Related Instances
+
+```bash
+# Find instances on same or related terms
+curl -s http://localhost:5173/api/docs | jq '[.[] | select(.type == "instance") | select(.title | test("$ARGUMENTS"; "i")) | {id, title, status}]'
+```
+
+### 2. Check for Frameworks to Apply
+
+```bash
+# Find frameworks that might apply
+curl -s http://localhost:5173/api/docs | jq '[.[] | select(.type == "framework") | {id, title, framework_kind}]'
+```
+
+### 3. Check for Sources
+
+```bash
+# Find sources that might inform this instance
+curl -s http://localhost:5173/api/docs | jq '[.[] | select(.type == "source") | select(.title | test("$ARGUMENTS"; "i")) | {id, title}]'
+```
+
+### 4. Report & Decide
+
+Based on discovery:
+
+| Finding | Action |
+|---------|--------|
+| **Prior instance exists** | Reference as upstream with `relation: prior` |
+| **Framework applies** | Reference as upstream with `relation: method` |
+| **Source available** | Reference as upstream with `relation: source` |
+| **No related docs** | Proceed fresh |
+
+---
+
 ## Required Fields
 
 ```yaml
+# ─── DESCRIPTIVE ────────────────────────────────────────────
 id: inst-{slug}
 title: {TERM} or {TERM operator TERM}
 type: instance
-status: incubating | draft | verified
-operator: {operator} (if dialectical)
-formula: [fw-etymon-method, fw-{other-framework}]
-channel: etymon | loomcommander | null
+framework_kind: null
+framework_ids: [fw-etymon-method, fw-{other-framework}]
+source_id: {src-id-if-referenced}
+output: etymon | loomcommander | null
 perspective: philosophical-genealogy | linguistic-recovery | economic-genealogy | legal-grammar
+status: incubating | draft | verified
 tags: [relevant, tags]
+
+# ─── CONDUCTING ─────────────────────────────────────────────
+intent: produce
+execution_state: completed
+upstream:
+  - doc: fw-etymon-method
+    relation: method
+  - doc: {source-id-from-discovery}
+    relation: source
+downstream: []
 ```
 
 ## Document Structure (Etymon Method)
@@ -123,6 +173,25 @@ Write the instance document to:
 
 Include YAML frontmatter with all required fields.
 
+Add a **Composition** section at the end of the document:
+
+```markdown
+---
+
+## Composition
+
+**Upstream (what informed this instance):**
+- [Etymon Method](fw-etymon-method) — method applied
+- [{Source Title}]({source-id}) — reference material
+
+**Downstream (what this instance enables):**
+- Video production
+- Further instances building on this
+
+**Related (discovered but not upstream):**
+- {other related docs found during discovery}
+```
+
 ## Incubating Instance Template
 
 If sources are needed, use this abbreviated form:
@@ -144,5 +213,13 @@ The thesis in 2-3 sentences.
 ## Notes
 Any preliminary excavation or thinking.
 ```
+
+## Post-Completion
+
+After writing the instance, report:
+
+1. **What was discovered:** Related instances, frameworks, sources found
+2. **What was used:** Which docs informed this instance (now in `upstream`)
+3. **What this enables:** Next steps (video, further instances, etc.)
 
 Now generate the instance for: $ARGUMENTS

@@ -20,6 +20,50 @@ You are producing a **loomlib instance** using the **Survey Method** toolkit.
 | **Findings** | Synthesize understanding | One-paragraph summary + key files |
 | **Open Questions** | Identify gaps | What remains unclear |
 
+## Discovery (before Protocol)
+
+Query the loomlib API to find related documents before producing.
+
+### 1. Check for Related Surveys
+
+```bash
+# Find surveys on same or related topics
+curl -s http://localhost:5173/api/docs | jq '[.[] | select(.id | contains("survey")) | select(.title | test("$ARGUMENTS"; "i")) | {id, title, status, execution_state}]'
+```
+
+### 2. Check for Related Frameworks
+
+```bash
+# Find frameworks that might provide method or context
+curl -s http://localhost:5173/api/docs | jq '[.[] | select(.type == "framework") | select(.title | test("$ARGUMENTS"; "i")) | {id, title, framework_kind}]'
+```
+
+### 3. Broader Search
+
+```bash
+# Find any related docs
+curl -s http://localhost:5173/api/docs | jq '[.[] | select(.title | test("$ARGUMENTS"; "i")) | {id, title, type, status}]'
+```
+
+### 4. Report & Decide
+
+Based on discovery:
+
+| Finding | Action |
+|---------|--------|
+| **Prior survey exists** | Reference as upstream with `relation: prior` |
+| **Related scope exists** | Note as related context |
+| **Framework applies** | Reference as upstream with `relation: method` |
+| **No related docs** | Proceed fresh |
+
+**Fallback** (if dev server not running):
+```bash
+ls loomlib/docs/instance/survey-* | grep -i "{slug}"
+ls loomlib/docs/framework/ | grep -i "{slug}"
+```
+
+---
+
 ## Protocol
 
 ### 1. Survey
@@ -50,21 +94,41 @@ Synthesize what you learned:
 ### 5. Open Questions
 What remains unclear? What would require deeper investigation?
 
+### 6. Decisions (if implementation follows)
+If this survey informs implementation work, resolve open questions before coding:
+- Document decision options considered
+- Record the choice made and rationale
+- Derive implementation constraints from decisions
+
+Skip this section for pure research surveys with no immediate implementation.
+
 ## Output
 
 Write the survey instance to: `loomlib/docs/instance/survey-{slug}.md`
 
 ```markdown
 ---
+# ─── DESCRIPTIVE ────────────────────────────────────────────
 id: inst-survey-{slug}
 title: "Survey: {Topic}"
 type: instance
+framework_kind: null
 framework_ids: [fw-survey-method]
 source_id: null
 output: loomcommander
 perspective: null
 status: draft
 tags: [survey, {relevant}, {tags}]
+
+# ─── CONDUCTING ─────────────────────────────────────────────
+intent: research
+execution_state: completed
+upstream:
+  - doc: fw-survey-method
+    relation: method
+  - doc: {prior-survey-id-from-discovery}
+    relation: prior
+downstream: []
 ---
 
 # Survey: {Topic}
@@ -132,6 +196,38 @@ Relevant files:
 
 - {What remains unclear}
 - {What needs deeper investigation}
+
+---
+
+## Decisions
+
+*(Include this section only if survey informs implementation. Otherwise omit.)*
+
+Decisions required before implementation:
+
+| Question | Options | Decision | Rationale |
+|----------|---------|----------|-----------|
+| {Open question} | {Option A / Option B / ...} | **{Choice}** | {Why this choice} |
+
+### Implementation Constraints (from decisions)
+
+1. {Constraint derived from decisions}
+2. {Another constraint}
+
+---
+
+## Composition
+
+**Upstream (what informed this survey):**
+- [Survey Method](fw-survey-method) — method used
+- [{Prior Survey Title}]({prior-survey-id}) — prior work referenced
+
+**Downstream (what this survey enables):**
+- Scope work on this topic
+- Implementation planning
+
+**Related (discovered but not upstream):**
+- {other related docs found during discovery}
 ```
 
 ## When to Use This Command
@@ -150,9 +246,31 @@ Relevant files:
 ## Status
 
 Survey instances typically start as `draft`. Promote to `verified` after:
+- [ ] Discovery completed (API queried, related docs checked)
 - [ ] All sections complete
 - [ ] Key files accurately identified
 - [ ] Dependencies mapped
 - [ ] Open questions are genuine gaps, not laziness
+- [ ] Upstream references accurate (from discovery)
+- [ ] If implementation follows: Decisions section resolves blocking questions
+
+## Post-Completion
+
+After writing the survey, report:
+
+1. **What was discovered:** Related surveys, frameworks, or other docs found
+2. **What was used:** Which docs informed this survey (now in `upstream`)
+3. **What this enables:** Next steps (scope, implementation, etc.)
+
+Example:
+```
+Discovery found:
+- inst-survey-editor-implementation (verified) — referenced as prior
+- fw-survey-method (verified) — used as method
+
+This survey enables:
+- Scope work on editor persistence
+- Implementation planning for persistence fixes
+```
 
 Now survey: $ARGUMENTS

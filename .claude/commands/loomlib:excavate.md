@@ -17,6 +17,37 @@ Perform semantic excavation using the Etymon Method. This is pre-production rese
 | **DRIFT** | How did meaning shift? | Inflection points, what was lost |
 | **RECOVERY** | What should it mean? | Normative claim, application |
 
+## Discovery (before Research)
+
+Query the loomlib API to find related documents before starting.
+
+### 1. Check for Prior Excavations
+
+```bash
+# Find excavations on same or related terms
+curl -s http://localhost:5173/api/docs | jq '[.[] | select(.title | test("$ARGUMENTS"; "i")) | {id, title, type, status}]'
+```
+
+### 2. Check for Sources
+
+```bash
+# Find sources that might inform this excavation
+curl -s http://localhost:5173/api/docs | jq '[.[] | select(.type == "source") | {id, title}]'
+```
+
+### 3. Report & Decide
+
+Based on discovery:
+
+| Finding | Action |
+|---------|--------|
+| **Prior excavation exists** | Reference as upstream with `relation: prior` |
+| **Related instance exists** | Check if this is redundant or extends it |
+| **Source available** | Reference as upstream with `relation: source` |
+| **No related docs** | Proceed fresh |
+
+---
+
 ## Research Protocol
 
 ### 1. Etymology
@@ -57,7 +88,31 @@ Propose:
 ## Output Format
 
 ```markdown
-## Excavation Notes: {TERM}
+---
+# ─── DESCRIPTIVE ────────────────────────────────────────────
+id: inst-excavate-{slug}
+title: "Excavation: {TERM}"
+type: instance
+framework_kind: null
+framework_ids: [fw-etymon-method]
+source_id: null
+output: null
+perspective: linguistic-recovery
+status: incubating
+tags: [excavation, {term}, etymology]
+
+# ─── CONDUCTING ─────────────────────────────────────────────
+intent: research
+execution_state: completed
+upstream:
+  - doc: fw-etymon-method
+    relation: method
+  - doc: {source-id-from-discovery}
+    relation: source
+downstream: []
+---
+
+# Excavation: {TERM}
 
 **Date:** {date}
 **Status:** research (pre-production)
@@ -151,12 +206,19 @@ After excavation, choose operator based on what the research revealed:
 ## Save Location
 
 Write excavation notes to:
-`loomlib/docs/research/{slug}-excavation.md`
+`loomlib/docs/instance/excavate-{slug}.md`
 
-This is working material. When research is complete, the excavation becomes an **instance** document. Either:
-1. Continue directly to full instance structure (if ready)
-2. Save research notes and use `/loomlib:instance` later
+Excavations are instances of Etymon Method — they belong in the app's document graph. When research is complete and findings are solid, the excavation can be:
+1. Promoted to a full instance via status update
+2. Used as upstream reference for a more polished instance
 
-Excavations are instances of Etymon Method — they belong in the app's document graph once ready.
+## Post-Completion
+
+After writing the excavation, report:
+
+1. **What was discovered:** Prior excavations, related instances, sources found
+2. **What was used:** Which docs informed this excavation (now in `upstream`)
+3. **Production readiness:** Can this become a full instance, or does it need more research?
+4. **Suggested next steps:** Operator selection, sources needed, etc.
 
 Now excavate: $ARGUMENTS

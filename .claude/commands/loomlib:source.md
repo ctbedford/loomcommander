@@ -11,18 +11,56 @@ Generate a source document — reference material that informs instances and fra
 
 Sources feed the system. They're what you read *through* frameworks, and what you cite *in* instances.
 
+## Discovery (before Capture)
+
+Query the loomlib API to find related documents.
+
+### 1. Check for Related Sources
+
+```bash
+# Find sources by same author or on same topic
+curl -s http://localhost:5173/api/docs | jq '[.[] | select(.type == "source") | select(.title | test("$ARGUMENTS"; "i")) | {id, title, status}]'
+```
+
+### 2. Check for Instances That Need This Source
+
+```bash
+# Find incubating instances that might need verification
+curl -s http://localhost:5173/api/docs | jq '[.[] | select(.type == "instance") | select(.status == "incubating") | {id, title}]'
+```
+
+### 3. Report & Decide
+
+Based on discovery:
+
+| Finding | Action |
+|---------|--------|
+| **Related source exists** | Check if duplicate, or note as companion |
+| **Incubating instance needs this** | Note in "Instances This Unlocks" section |
+| **No related docs** | Proceed fresh |
+
+---
+
 ## Required Fields
 
 ```yaml
+# ─── DESCRIPTIVE ────────────────────────────────────────────
 id: src-{slug}
 title: {Title}
 type: source
-status: incubating | draft | verified
-author: {Author Name}
-year: {Year if known}
+framework_kind: null
+framework_ids: []
+source_id: null
+output: null
 perspective: philosophical-genealogy | linguistic-recovery | economic-genealogy | legal-grammar
-tags: [relevant, tags]
-unlocks: [inst-{instances this source would verify}]
+status: incubating | draft | verified
+tags: [relevant, tags, author-name]
+
+# ─── CONDUCTING ─────────────────────────────────────────────
+intent: capture
+execution_state: completed
+upstream: []
+downstream: []
 ```
 
 ## Document Structure
@@ -120,5 +158,15 @@ A source moves to `verified` when:
 
 Write the source document to:
 `loomlib/docs/source/{slug}.md`
+
+Include YAML frontmatter with all required fields.
+
+## Post-Completion
+
+After writing the source, report:
+
+1. **What was discovered:** Related sources, incubating instances found
+2. **What this source captures:** Key claims and vocabulary
+3. **What this enables:** Instances this can verify, frameworks it informs
 
 Now document: $ARGUMENTS
