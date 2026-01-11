@@ -30,3 +30,53 @@
 > Have I read the spec? Is the plan approved? Will tests/build prove completion?
 
 **No spec read = no code. No plan approval = no implementation. No green build = not done.**
+
+
+## Jira Context Tools (PathX 2 Board)
+
+Scripts at `/scripts/jira/` — read-only access for context gathering.
+
+### Commands
+```bash
+python scripts/jira/board_state.py          # Current board snapshot (all columns)
+python scripts/jira/board_state.py --column "TO DO"  # Single column
+python scripts/jira/search.py "keyword"     # Find related tickets by text
+python scripts/jira/search.py --jql "status = 'In Development'"  # Raw JQL
+python scripts/jira/get_ticket.py P2-1234   # Full ticket detail
+```
+
+### Drafting Tickets
+1. Gather context (board state, related tickets, user request)
+2. Draft to `/drafts/tickets/<name>.md` using structure:
+   - Summary (one line)
+   - Strategic Context (why this matters)
+   - User Story (As a... I want... so that...)
+   - Acceptance Criteria (testable conditions)
+   - Stakeholder Notes (who requested, what they said)
+   - Technical Notes (if relevant)
+   - Labels (suggested)
+3. User reviews, pastes to Jira manually
+
+### Stop If
+- Creating/updating tickets via API (read-only access only)
+- Drafting without gathering board context first
+- Thin tickets (no strategic context, no acceptance criteria)
+```
+
+---
+
+**Directory addition:**
+```
+/loomcommander
+├── CLAUDE.md
+├── minwrite/
+├── scripts/
+│   └── jira/
+│       ├── auth.py
+│       ├── board_state.py
+│       ├── search.py
+│       └── get_ticket.py
+├── templates/
+│   └── ticket.md
+└── drafts/
+    └── tickets/
