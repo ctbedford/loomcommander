@@ -8,21 +8,27 @@
 
 :root {
   --bg: #fafafa;
+  --bg-subtle: #f0f0f0;
   --text: #1a1a1a;
   --placeholder: #999;
+  --border: #ddd;
 }
 
 [data-theme="dark"] {
   --bg: #1a1a1a;
+  --bg-subtle: #252525;
   --text: #e5e5e5;
   --placeholder: #666;
+  --border: #333;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     --bg: #1a1a1a;
+    --bg-subtle: #252525;
     --text: #e5e5e5;
     --placeholder: #666;
+    --border: #333;
   }
 }
 
@@ -149,4 +155,32 @@ html, body, #app {
 
 .preview em {
   font-style: italic;
+}
+
+.preview table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+}
+
+.preview th,
+.preview td {
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+
+.preview th {
+  background: var(--bg-subtle);
+  font-weight: 600;
+}
+
+.preview th[align="center"],
+.preview td[align="center"] {
+  text-align: center;
+}
+
+.preview th[align="right"],
+.preview td[align="right"] {
+  text-align: right;
 }

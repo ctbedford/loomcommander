@@ -1,9 +1,255 @@
-# Current Task: Multi-Document Support
+# Current Task: Sidebar Content Reflow Animation
+
+## Goal
+When the Related sidebar opens/closes, the editor/preview content should smoothly animate its width to accommodate, creating a beautiful text reflow effect rather than the current overlay behavior.
+
+## Survey Findings
+
+### Current State
+- **Sidebar**: Absolutely positioned, overlays content
+- **Width transition**: `width 0.25s ease` (0 → 200px)
+- **Problem**: Content doesn't reflow — sidebar just covers it
+
+### Desired State
+- Content area width **shrinks** when sidebar opens
+- Text reflows smoothly with line-by-line animation
+- Sidebar slides in from right
+- Beautiful, cohesive motion design
+
+## Implementation Approach
+
+### Option A: CSS Grid Animation (Recommended)
+Use CSS Grid for layout with `grid-template-columns` animation:
+
+```css
+.editor-view__content {
+  display: grid;
+  grid-template-columns: 1fr 0px;
+  transition: grid-template-columns 0.3s ease-out;
+}
+
+.editor-view--related .editor-view__content {
+  grid-template-columns: 1fr 200px;
+}
+```
+
+**Pros**: Native browser handling of reflow, hardware-accelerated, clean CSS
+**Cons**: Grid column animation has limited browser support for `fr` units
+
+### Option B: Margin/Padding Animation
+Animate content area's right margin/padding:
+
+```css
+.editor-view__content {
+  margin-right: 0;
+  transition: margin-right 0.3s ease-out;
+}
+
+.editor-view--related .editor-view__content {
+  margin-right: 200px;
+}
+```
+
+**Pros**: Wide browser support, simple implementation
+**Cons**: Sidebar still needs positioning adjustment
+
+### Option C: Flexbox with Width Animation (Selected)
+Keep flexbox, animate sidebar width while content uses `flex: 1`:
+
+```css
+.editor-view__content {
+  display: flex;
+}
+
+.editor-view__textarea,
+.editor-view__preview {
+  flex: 1;
+  min-width: 0;
+  transition: none; /* Text reflows naturally */
+}
+
+.editor-view__related {
+  width: 0;
+  flex-shrink: 0;
+  transition: width 0.3s ease-out;
+}
+
+.editor-view--related .editor-view__related {
+  width: 200px;
+}
+```
+
+This works because `flex: 1` makes content fill remaining space, and animating the sibling's width causes natural reflow.
+
+## Implementation Steps
+
+### Step 1: CSS Layout Changes (`loomlib/src/ui/editor.css`)
+
+1. Remove absolute positioning from `.editor-view__related`
+2. Change related panel to `flex-shrink: 0` with animated width
+3. Ensure textarea/preview use `flex: 1` to fill remaining space
+4. Add smooth transition timing
+
+Key changes:
+```css
+/* Content area */
+.editor-view__content {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Main editing areas share space */
+.editor-view__textarea,
+.editor-view__preview {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Sidebar is part of flex, not absolute */
+.editor-view__related {
+  flex-shrink: 0;
+  width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition:
+    width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.2s ease;
+}
+
+.editor-view--related .editor-view__related {
+  width: 200px;
+  opacity: 1;
+}
+```
+
+### Step 2: Preview Mode Adjustment
+Ensure preview mode positioning works with the new layout. The preview and textarea swap via opacity/transform but should both respect the sidebar space.
+
+### Step 3: Focus Mode
+Verify focus mode still hides sidebar correctly.
+
+### Step 4: Polish Animation Curve
+Use a custom easing curve for natural motion:
+- `cubic-bezier(0.4, 0, 0.2, 1)` — Material Design standard easing
+- Slightly slower duration (0.3s) for readable text reflow
+
+### Step 5: Staggered Node Animation
+Keep existing node entrance animations but adjust timing:
+```css
+.editor-view__rel-node {
+  animation-delay: calc(100ms + var(--rel-index) * 30ms);
+}
+```
+Start node animations 100ms after sidebar begins opening.
+
+## File Changes
+
+| File | Change |
+|------|--------|
+| `loomlib/src/ui/editor.css` | Modify sidebar layout from absolute to flex |
+
+## Testing
+
+1. `cd loomlib && npm run dev`
+2. Open editor with a document
+3. Toggle related panel (Cmd+/)
+4. Verify:
+   - Text reflows smoothly as sidebar opens
+   - No layout jump or flicker
+   - Related nodes animate in after sidebar opens
+   - Focus mode still works
+   - Preview mode works correctly with sidebar
+
+## Design Token Alignment
+
+Use existing timing variables where appropriate:
+- `--transition-normal: 200ms ease` for opacity
+- `--transition-slow: 300ms ease-out` for width
+
+Or introduce new:
+- `--transition-reflow: 0.3s cubic-bezier(0.4, 0, 0.2, 1)`
+
+---
+
+# Previous Task: GFM Table Rendering
+
+## Goal
+Render GFM tables in markdown preview. Tables pasted from Claude render as tables, not source.
+
+## Implementation Steps
+
+### Step 1: Table Parser (`src/editor/markdown.ts`)
+Add GFM table detection and rendering to existing parser:
+
+```ts
+// Detect table block: lines starting with |, separator row with |---|
+function parseTable(lines: string[]): { html: string; consumed: number } | null
+
+// Table structure:
+// | Header 1 | Header 2 |
+// |----------|----------|
+// | Cell 1   | Cell 2   |
+```
+
+Logic:
+1. Detect first row starts with `|`
+2. Verify second row is separator: `|---|---|` (with optional alignment `:---`, `:---:`, `---:`)
+3. Consume subsequent rows starting with `|`
+4. Parse alignment from separator row
+5. Emit `<table><thead>...</thead><tbody>...</tbody></table>`
+
+### Step 2: Table Styles (`src/ui/styles.css`)
+Add minimal table styling:
+```css
+.preview table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+.preview th, .preview td { border: 1px solid var(--border); padding: 0.5rem; }
+.preview th { background: var(--bg-subtle); text-align: left; }
+.preview td[align="center"] { text-align: center; }
+.preview td[align="right"] { text-align: right; }
+```
+
+### Step 3: Integration
+Modify `markdownToHtml()` main loop:
+- Before paragraph accumulation, check for table start
+- If table detected, parse entire table block, skip those lines
+- Continue normal parsing after table
+
+## File Changes
+
+| File | Change |
+|------|--------|
+| `src/editor/markdown.ts` | ADD table parsing logic |
+| `src/ui/styles.css` | ADD table styles |
+
+## Verification
+```bash
+cd minwrite && npm run build && npm run dev
+```
+1. Create doc with GFM table
+2. `Cmd+P` to preview
+3. Table renders with headers, borders, alignment
+4. Inline formatting works in cells (bold, links, etc.)
+
+## Test Table
+```markdown
+| Feature | Status |
+|---------|--------|
+| Headings | ✓ |
+| **Bold** | ✓ |
+| Tables | pending |
+```
+
+---
+
+# Previous Task: Multi-Document Support
 
 ## Goal
 Command palette for navigating multiple documents. Zero UI when writing.
 
-## Implementation Steps
+## Implementation Steps (Completed)
 
 ### Step 1: IndexedDB Wrapper (`src/library/db.ts`)
 Create typed IndexedDB helper:
@@ -143,6 +389,12 @@ cd minwrite && npm run build && npm run dev
 - HTML export - clean, printable
 - PDF export - via browser print or jsPDF
 - Plain text - strip markdown, just prose
+
+### Phase 5: Capture Pipeline (next)
+1. **Table rendering** - GFM table support in markdown parser
+2. **Capture mode** - `Cmd+V` in empty doc detects markdown, offers to clean/format
+3. **Source metadata** - Optional front matter: `<!-- source: URL/2024-01-04 -->`
+4. **Export polish** - PDF/HTML that renders tables properly
 
 ## Tech Stack
 - Vite + TypeScript (strict mode, no React in editor core)
