@@ -8,6 +8,8 @@
  * This domain operationalizes the brief→survey→plan→task workflow.
  */
 
+import type { ViewConfig } from './index.ts';
+
 export interface OpsDocumentType {
   id: string;
   label: string;
@@ -30,6 +32,7 @@ export interface OpsConfig {
   types: Record<string, OpsDocumentType>;
   statusProgression: string[];
   statuses: Record<string, OpsStatus>;
+  views: ViewConfig[];
 }
 
 export const opsConfig: OpsConfig = {
@@ -209,6 +212,31 @@ export const opsConfig: OpsConfig = {
       position: 5,
     },
   },
+
+  // ─────────────────────────────────────────────────────────────────────
+  // VIEWS - Domain-specific view configuration
+  // ─────────────────────────────────────────────────────────────────────
+  views: [
+    {
+      id: 'list',
+      name: 'List',
+      shortcut: 'L',
+      icon: '☰',
+      default: true,
+    },
+    {
+      id: 'kanban',
+      name: 'Workflow',
+      shortcut: 'K',
+      icon: '▣',
+    },
+    {
+      id: 'deck',
+      name: 'Board',
+      shortcut: 'D',
+      icon: '◧',
+    },
+  ],
 };
 
 // Task-specific statuses (subset used for tasks)

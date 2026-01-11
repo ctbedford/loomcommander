@@ -5,6 +5,8 @@
  * This is the default domain.
  */
 
+import type { ViewConfig } from './index.ts';
+
 export interface EtymonDocumentType {
   id: string;
   label: string;
@@ -26,6 +28,7 @@ export interface EtymonConfig {
   types: Record<string, EtymonDocumentType>;
   statusProgression: string[];
   statuses: Record<string, EtymonStatus>;
+  views: ViewConfig[];
 }
 
 export const etymonConfig: EtymonConfig = {
@@ -90,6 +93,17 @@ export const etymonConfig: EtymonConfig = {
       position: 4,
     },
   },
+
+  // ─────────────────────────────────────────────────────────────────────
+  // VIEWS - Full research view set
+  // ─────────────────────────────────────────────────────────────────────
+  views: [
+    { id: 'list', name: 'List', shortcut: 'L', icon: '☰', default: true },
+    { id: 'constellation', name: 'Constellation', shortcut: 'C', icon: '✧' },
+    { id: 'deck', name: 'Deck', shortcut: 'D', icon: '◧' },
+    { id: 'spatial', name: 'Spatial', shortcut: 'S', icon: '◌' },
+    { id: 'flow', name: 'Flow', shortcut: 'F', icon: '↔' },
+  ],
 };
 
 // Framework subtypes

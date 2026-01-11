@@ -7,6 +7,8 @@
  * This is a meta-project for autonomous coding documentation.
  */
 
+import type { ViewConfig } from './index.ts';
+
 export interface MetaDocumentType {
   id: string;
   label: string;
@@ -28,6 +30,7 @@ export interface MetaConfig {
   types: Record<string, MetaDocumentType>;
   statusProgression: string[];
   statuses: Record<string, MetaStatus>;
+  views: ViewConfig[];
 }
 
 export const metaConfig: MetaConfig = {
@@ -155,6 +158,15 @@ export const metaConfig: MetaConfig = {
       position: 4,
     },
   },
+
+  // ─────────────────────────────────────────────────────────────────────
+  // VIEWS - System documentation focused
+  // ─────────────────────────────────────────────────────────────────────
+  views: [
+    { id: 'list', name: 'List', shortcut: 'L', icon: '☰', default: true },
+    { id: 'deck', name: 'Catalog', shortcut: 'D', icon: '◧' },
+    { id: 'constellation', name: 'Graph', shortcut: 'C', icon: '✧' },
+  ],
 };
 
 // Helper functions for meta domain

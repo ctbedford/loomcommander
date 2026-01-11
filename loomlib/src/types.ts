@@ -171,7 +171,7 @@ export interface GraphEdge {
 }
 
 // View states
-export type ViewMode = 'list' | 'constellation' | 'flow' | 'editor' | 'spatial' | 'deck';
+export type ViewMode = 'list' | 'constellation' | 'flow' | 'editor' | 'spatial' | 'deck' | 'kanban';
 
 // ─────────────────────────────────────────────────────────────────────
 // DECK VIEW - Grid-based browsing with lens-based sorting

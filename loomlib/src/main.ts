@@ -7,6 +7,7 @@ import './ui/constellation.css';
 import './ui/flow.css';
 import './ui/spatial.css';
 import './ui/deck.css';
+import './ui/kanban.css';
 import './ui/palette.css';
 
 import { Shell } from './layout/shell.ts';

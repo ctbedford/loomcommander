@@ -4,6 +4,8 @@
  * Content creation knowledge graph for video/audio/written content.
  */
 
+import type { ViewConfig } from './index.ts';
+
 export interface StudioDocumentType {
   id: string;
   label: string;
@@ -25,6 +27,7 @@ export interface StudioConfig {
   types: Record<string, StudioDocumentType>;
   statusProgression: string[];
   statuses: Record<string, StudioStatus>;
+  views: ViewConfig[];
 }
 
 export const studioConfig: StudioConfig = {
@@ -96,6 +99,15 @@ export const studioConfig: StudioConfig = {
       position: 3,
     },
   },
+
+  // ─────────────────────────────────────────────────────────────────────
+  // VIEWS - Content creation focused
+  // ─────────────────────────────────────────────────────────────────────
+  views: [
+    { id: 'list', name: 'List', shortcut: 'L', icon: '☰', default: true },
+    { id: 'deck', name: 'Gallery', shortcut: 'D', icon: '◧' },
+    { id: 'constellation', name: 'Map', shortcut: 'C', icon: '✧' },
+  ],
 };
 
 // Helper functions for studio domain

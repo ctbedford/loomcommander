@@ -13,7 +13,29 @@ import { etymonConfig } from './etymon.ts';
 import { studioConfig } from './studio.ts';
 import { metaConfig } from './meta.ts';
 import { opsConfig } from './ops.ts';
-import { getCurrentDomain } from '../../types.ts';
+import { getCurrentDomain, type ViewMode } from '../../types.ts';
+
+// ─────────────────────────────────────────────────────────────────────
+// VIEW CONFIGURATION - Domain-specific view setup
+// ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Configuration for a view in a domain
+ */
+export interface ViewConfig {
+  /** View identifier - must match a registered view */
+  id: ViewMode;
+  /** Display name (can differ from default, e.g., "Board" instead of "Deck") */
+  name: string;
+  /** Keyboard shortcut key (used with Cmd+Shift+{key}) */
+  shortcut?: string;
+  /** Icon for view switcher */
+  icon?: string;
+  /** Whether this is the default view on startup */
+  default?: boolean;
+  /** View-specific options */
+  options?: Record<string, unknown>;
+}
 
 // Domain registry
 const domains = {
