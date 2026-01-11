@@ -6,9 +6,17 @@ framework_kind: null
 framework_ids: [fw-etymon-method]
 source_id: null
 output: etymon
-perspective: null
+perspective: linguistic-recovery
 status: incubating
 tags: [etymology, operative, opus, work, agent]
+
+# ─── CONDUCTING ─────────────────────────────────────────────
+intent: produce
+execution_state: in_progress
+upstream:
+  - doc: fw-etymon-method
+    relation: method
+downstream: []
 ---
 # OPERATIVE
 

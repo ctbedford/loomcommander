@@ -6,9 +6,17 @@ framework_kind: null
 framework_ids: [fw-etymon-method]
 source_id: null
 output: etymon
-perspective: null
+perspective: philosophical-genealogy
 status: verified
 tags: [etymology, alliance, empire, delian-league, drift]
+
+# ─── CONDUCTING ─────────────────────────────────────────────
+intent: produce
+execution_state: completed
+upstream:
+  - doc: fw-etymon-method
+    relation: method
+downstream: []
 ---
 # ALLIANCE TO EMPIRE
 

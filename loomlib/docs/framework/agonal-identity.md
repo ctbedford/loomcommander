@@ -5,10 +5,16 @@ type: framework
 framework_kind: domain
 framework_ids: []
 source_id: null
-output: null
+output: etymon
 perspective: philosophical-genealogy
 status: verified
 tags: [agon, contest, identity, nietzsche, greek]
+
+# ─── CONDUCTING ─────────────────────────────────────────────
+intent: build
+execution_state: completed
+upstream: []
+downstream: []
 ---
 # Agonal Identity
 

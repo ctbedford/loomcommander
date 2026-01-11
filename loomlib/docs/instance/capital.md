@@ -6,9 +6,19 @@ framework_kind: null
 framework_ids: [fw-etymon-method, fw-oikonomia-chrematistics]
 source_id: null
 output: etymon
-perspective: null
+perspective: economic-genealogy
 status: verified
 tags: [etymology, capital, wealth, accumulation, cattle, mortality]
+
+# ─── CONDUCTING ─────────────────────────────────────────────
+intent: produce
+execution_state: completed
+upstream:
+  - doc: fw-etymon-method
+    relation: method
+  - doc: fw-oikonomia-chrematistics
+    relation: informs
+downstream: []
 ---
 # CAPITAL
 

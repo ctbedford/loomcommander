@@ -9,6 +9,12 @@ output: loomcommander
 perspective: null
 status: draft
 tags: [github, code, claude-code]
+
+# ─── CONDUCTING ─────────────────────────────────────────────
+intent: organize
+execution_state: in_progress
+upstream: []
+downstream: []
 ---
 # Loomcommander Channel Index
 

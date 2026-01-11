@@ -6,9 +6,19 @@ framework_kind: null
 framework_ids: [fw-etymon-method, fw-agonal-identity]
 source_id: null
 output: etymon
-perspective: null
+perspective: philosophical-genealogy
 status: verified
 tags: [etymology, agon, contest, identity, greek]
+
+# ─── CONDUCTING ─────────────────────────────────────────────
+intent: produce
+execution_state: completed
+upstream:
+  - doc: fw-etymon-method
+    relation: method
+  - doc: fw-agonal-identity
+    relation: informs
+downstream: []
 ---
 # AGONAL IDENTITY
 

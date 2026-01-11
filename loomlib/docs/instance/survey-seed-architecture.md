@@ -9,6 +9,14 @@ output: loomcommander
 perspective: null
 status: verified
 tags: [survey, architecture, seed, build, redundancy]
+
+# ─── CONDUCTING ─────────────────────────────────────────────
+intent: research
+execution_state: completed
+upstream:
+  - doc: fw-survey-method
+    relation: method
+downstream: []
 ---
 
 # Survey: Seed Architecture Redundancy

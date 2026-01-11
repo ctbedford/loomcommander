@@ -5,10 +5,18 @@ type: framework
 framework_kind: domain
 framework_ids: []
 source_id: src-vervaeke-awftmc
-output: null
+output: etymon
 perspective: philosophical-genealogy
 status: verified
 tags: [vervaeke, knowing, wisdom, meaning, integration]
+
+# ─── CONDUCTING ─────────────────────────────────────────────
+intent: build
+execution_state: completed
+upstream:
+  - doc: src-vervaeke-awftmc
+    relation: source
+downstream: []
 ---
 # The Four Knowings
 

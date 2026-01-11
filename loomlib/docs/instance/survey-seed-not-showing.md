@@ -9,6 +9,14 @@ output: loomcommander
 perspective: null
 status: verified
 tags: [survey, seed, sync, indexeddb, bug-analysis]
+
+# ─── CONDUCTING ─────────────────────────────────────────────
+intent: research
+execution_state: completed
+upstream:
+  - doc: fw-survey-method
+    relation: method
+downstream: []
 ---
 
 # Survey: Why Synced Documents Don't Appear

@@ -7,8 +7,14 @@ status: verified
 perspective: null
 framework_ids: []
 source_id: null
-output: null
+output: loomcommander
 tags: [codebase, investigation, structure, archaeology]
+
+# ─── CONDUCTING ─────────────────────────────────────────────
+intent: build
+execution_state: completed
+upstream: []
+downstream: []
 ---
 
 # Survey Method

@@ -5,10 +5,18 @@ type: framework
 framework_kind: domain
 framework_ids: []
 source_id: src-aristotle-politics
-output: null
+output: etymon
 perspective: economic-genealogy
 status: verified
 tags: [aristotle, limits, telos, accumulation, bounded]
+
+# ─── CONDUCTING ─────────────────────────────────────────────
+intent: build
+execution_state: completed
+upstream:
+  - doc: src-aristotle-politics
+    relation: source
+downstream: []
 ---
 # Oikonomia vs Chrematistics
 

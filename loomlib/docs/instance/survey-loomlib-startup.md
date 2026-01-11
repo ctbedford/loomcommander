@@ -9,6 +9,14 @@ output: loomcommander
 perspective: null
 status: draft
 tags: [survey, startup, development, vite]
+
+# ─── CONDUCTING ─────────────────────────────────────────────
+intent: research
+execution_state: completed
+upstream:
+  - doc: fw-survey-method
+    relation: method
+downstream: []
 ---
 
 # Survey: How to Start Loomlib

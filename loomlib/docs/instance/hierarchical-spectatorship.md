@@ -6,9 +6,19 @@ framework_kind: null
 framework_ids: [fw-etymon-method, fw-agonal-identity]
 source_id: null
 output: etymon
-perspective: null
+perspective: philosophical-genealogy
 status: incubating
 tags: [etymology, spectator, hierarchy, shonen, agon]
+
+# ─── CONDUCTING ─────────────────────────────────────────────
+intent: produce
+execution_state: in_progress
+upstream:
+  - doc: fw-etymon-method
+    relation: method
+  - doc: fw-agonal-identity
+    relation: informs
+downstream: []
 ---
 # HIERARCHICAL SPECTATORSHIP
 

@@ -9,6 +9,16 @@ output: null
 perspective: null
 status: verified
 tags: [analysis, architecture, distinction, system-design]
+
+# ─── CONDUCTING ─────────────────────────────────────────────
+intent: build
+execution_state: completed
+upstream: []
+downstream:
+  - doc: fw-scope-method
+    relation: informs
+  - doc: idx-loomlib-architecture
+    relation: method
 ---
 # Invariants/Variants
 

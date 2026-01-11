@@ -9,6 +9,14 @@ output: null
 perspective: economic-genealogy
 status: incubating
 tags: [aristotle, oikonomia, chrematistics]
+
+# ─── CONDUCTING ─────────────────────────────────────────────
+intent: capture
+execution_state: in_progress
+upstream: []
+downstream:
+  - doc: fw-oikonomia-chrematistics
+    relation: source
 ---
 # Politics Book I — Aristotle
 

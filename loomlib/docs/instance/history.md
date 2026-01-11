@@ -6,9 +6,17 @@ framework_kind: null
 framework_ids: [fw-etymon-method]
 source_id: null
 output: etymon
-perspective: null
+perspective: philosophical-genealogy
 status: verified
 tags: [etymology, history, inquiry, herodotus, method]
+
+# ─── CONDUCTING ─────────────────────────────────────────────
+intent: produce
+execution_state: completed
+upstream:
+  - doc: fw-etymon-method
+    relation: method
+downstream: []
 ---
 # HISTORY of HISTORY
 

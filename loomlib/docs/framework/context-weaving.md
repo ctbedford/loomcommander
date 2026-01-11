@@ -5,10 +5,16 @@ type: framework
 framework_kind: domain
 framework_ids: []
 source_id: null
-output: null
+output: etymon
 perspective: linguistic-recovery
 status: verified
 tags: [context, weaving, etymology, conversation, salience]
+
+# ─── CONDUCTING ─────────────────────────────────────────────
+intent: build
+execution_state: completed
+upstream: []
+downstream: []
 ---
 # Context as Weaving
 

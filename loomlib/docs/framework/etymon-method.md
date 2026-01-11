@@ -5,10 +5,16 @@ type: framework
 framework_kind: toolkit
 framework_ids: []
 source_id: null
-output: null
-perspective: null
+output: etymon
+perspective: linguistic-recovery
 status: verified
 tags: [excavation, drift, recovery, philology]
+
+# ─── CONDUCTING ─────────────────────────────────────────────
+intent: build
+execution_state: completed
+upstream: []
+downstream: []
 ---
 # Etymon Method
 

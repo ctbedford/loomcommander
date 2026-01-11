@@ -9,6 +9,14 @@ output: null
 perspective: null
 status: verified
 tags: [diagnosis, positioning, self-knowledge, analysis]
+
+# ─── CONDUCTING ─────────────────────────────────────────────
+intent: build
+execution_state: completed
+upstream:
+  - doc: fw-four-knowings
+    relation: informs
+downstream: []
 ---
 # Diagnostic Frames
 

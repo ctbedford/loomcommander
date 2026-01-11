@@ -9,6 +9,14 @@ output: loomcommander
 perspective: null
 status: verified
 tags: [survey, sync, indexeddb, data-flow, gap-analysis]
+
+# ─── CONDUCTING ─────────────────────────────────────────────
+intent: research
+execution_state: completed
+upstream:
+  - doc: fw-survey-method
+    relation: method
+downstream: []
 ---
 
 # Survey: IndexedDB Data Sync Gap

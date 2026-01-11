@@ -6,9 +6,17 @@ framework_kind: null
 framework_ids: [fw-etymon-method]
 source_id: null
 output: etymon
-perspective: null
+perspective: linguistic-recovery
 status: verified
 tags: [etymology, prompting, philology, ai, llm]
+
+# ─── CONDUCTING ─────────────────────────────────────────────
+intent: produce
+execution_state: completed
+upstream:
+  - doc: fw-etymon-method
+    relation: method
+downstream: []
 ---
 # AI PROMPTING as PHILOLOGY
 

@@ -6,9 +6,15 @@ framework_kind: toolkit
 framework_ids: []
 source_id: null
 output: null
-perspective: null
+perspective: economic-genealogy
 status: verified
 tags: [SEC, filings, procedural, finance, analysis]
+
+# ─── CONDUCTING ─────────────────────────────────────────────
+intent: build
+execution_state: completed
+upstream: []
+downstream: []
 ---
 # Reading a 10-K
 

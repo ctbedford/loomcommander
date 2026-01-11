@@ -9,6 +9,12 @@ output: etymon
 perspective: null
 status: draft
 tags: [youtube, video, pipeline]
+
+# ─── CONDUCTING ─────────────────────────────────────────────
+intent: organize
+execution_state: in_progress
+upstream: []
+downstream: []
 ---
 # Etymon Channel Index
 
