@@ -1,11 +1,13 @@
 import type { Document, ExecutionState, DocumentIntent } from '../types.ts';
 import { INTENT_ICONS, EXECUTION_STATE_DOTS, DEFAULT_INTENT } from '../types.ts';
-import { listDocuments } from '../data/documents.ts';
+import { listDomainDocuments } from '../data/documents.ts';
 import { renderCardList, renderSkeletonList } from '../components/document-card.ts';
 
 export interface ListViewOptions {
   onDocumentSelect: (doc: Document) => void;
   onNewDocument: () => void;
+  onGoToFlow?: () => void;
+  onGoToDeck?: () => void;
 }
 
 // Filter chip definitions
@@ -24,6 +26,7 @@ export class ListView {
   // Active filters
   private activeStateFilters: Set<ExecutionState> = new Set();
   private activeIntentFilters: Set<DocumentIntent> = new Set();
+  private activeTagFilter: string | null = null;
 
   constructor(container: HTMLElement, options: ListViewOptions) {
     this.container = container;
@@ -33,10 +36,22 @@ export class ListView {
     this.container.classList.add('list-view');
     this.container.innerHTML = `
       <div class="list-view__header">
-        <input type="text" class="list-view__search" placeholder="Search documents..." />
+        <div class="list-view__top-row">
+          <input type="text" class="list-view__search" placeholder="Search documents..." />
+          <div class="list-view__nav">
+            <button class="list-view__nav-btn list-view__nav-btn--flow" title="Flow view">↕</button>
+            <button class="list-view__nav-btn list-view__nav-btn--deck" title="Deck view (Cmd+Shift+D)">▦</button>
+          </div>
+        </div>
         <div class="list-view__filters">
           <div class="list-view__filter-group list-view__filter-group--state"></div>
           <div class="list-view__filter-group list-view__filter-group--intent"></div>
+        </div>
+        <div class="list-view__tag-filter">
+          <div class="list-view__tag-selected"></div>
+          <div class="list-view__tag-scroll">
+            <div class="list-view__tag-scroll-inner"></div>
+          </div>
         </div>
       </div>
       <div class="list-view__list"></div>
@@ -48,6 +63,8 @@ export class ListView {
     this.searchInput = this.container.querySelector('.list-view__search')!;
     this.listContainer = this.container.querySelector('.list-view__list')!;
     const newBtn = this.container.querySelector('.list-view__new-btn')!;
+    const flowBtn = this.container.querySelector('.list-view__nav-btn--flow');
+    const deckBtn = this.container.querySelector('.list-view__nav-btn--deck');
 
     // Render filter chips
     this.renderFilterChips();
@@ -56,6 +73,8 @@ export class ListView {
     this.searchInput.addEventListener('input', this.handleSearch);
     this.searchInput.addEventListener('keydown', this.handleKeydown);
     newBtn.addEventListener('click', () => this.options.onNewDocument());
+    flowBtn?.addEventListener('click', () => this.options.onGoToFlow?.());
+    deckBtn?.addEventListener('click', () => this.options.onGoToDeck?.());
   }
 
   private renderFilterChips(): void {
@@ -126,6 +145,119 @@ export class ListView {
     });
   }
 
+  // Get tags from documents matching current state/intent filters (excludes tag filter to avoid circular dependency)
+  private getContextualTags(): string[] {
+    const contextDocs = this.docs.filter(doc => {
+      // Apply state filter
+      if (this.activeStateFilters.size > 0) {
+        const docState = doc.execution_state ?? 'pending';
+        if (!this.activeStateFilters.has(docState)) return false;
+      }
+      // Apply intent filter
+      if (this.activeIntentFilters.size > 0) {
+        const docIntent = doc.intent ?? DEFAULT_INTENT[doc.type];
+        if (!this.activeIntentFilters.has(docIntent)) return false;
+      }
+      return true;
+    });
+
+    const tags = new Set<string>();
+    for (const doc of contextDocs) {
+      for (const tag of doc.tags) {
+        tags.add(tag);
+      }
+    }
+    // Shuffle tags randomly instead of alphabetical
+    return this.shuffleArray(Array.from(tags));
+  }
+
+  private shuffleArray<T>(array: T[]): T[] {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }
+
+  private renderTagFilter(): void {
+    const tagFilter = this.container.querySelector('.list-view__tag-filter');
+    if (!tagFilter) return;
+
+    const selectedEl = tagFilter.querySelector('.list-view__tag-selected')!;
+    const scrollEl = tagFilter.querySelector('.list-view__tag-scroll')!;
+    const scrollInner = scrollEl.querySelector('.list-view__tag-scroll-inner')!;
+
+    const tags = this.getContextualTags();
+
+    // Hide entire row if no tags
+    if (tags.length === 0) {
+      tagFilter.classList.add('list-view__tag-filter--hidden');
+      return;
+    }
+    tagFilter.classList.remove('list-view__tag-filter--hidden');
+
+    // Render selected tag (if any)
+    if (this.activeTagFilter) {
+      selectedEl.innerHTML = `
+        <button class="list-view__chip list-view__chip--tag list-view__chip--active" data-tag="${this.escapeHtml(this.activeTagFilter)}">
+          ${this.escapeHtml(this.activeTagFilter)}
+        </button>
+      `;
+      selectedEl.classList.add('list-view__tag-selected--active');
+      selectedEl.querySelector('button')?.addEventListener('click', () => this.selectTag(this.activeTagFilter!));
+    } else {
+      selectedEl.innerHTML = '';
+      selectedEl.classList.remove('list-view__tag-selected--active');
+    }
+
+    // Filter out selected tag from scroll
+    const scrollTags = tags.filter(t => t !== this.activeTagFilter);
+
+    if (scrollTags.length === 0) {
+      scrollInner.innerHTML = '';
+      scrollEl.classList.add('list-view__tag-scroll--empty');
+      return;
+    }
+    scrollEl.classList.remove('list-view__tag-scroll--empty');
+
+    // Calculate animation duration based on tag count (more tags = longer cycle)
+    // Very slow scroll: 90s base, 4.5s per tag
+    const duration = Math.max(90, scrollTags.length * 4.5);
+    (scrollInner as HTMLElement).style.setProperty('--tag-scroll-duration', `${duration}s`);
+
+    // Duplicate tags for seamless loop
+    const tagsHtml = scrollTags.map(t => `
+      <button class="list-view__chip list-view__chip--tag" data-tag="${this.escapeHtml(t)}">${this.escapeHtml(t)}</button>
+    `).join('');
+
+    scrollInner.innerHTML = tagsHtml + tagsHtml;
+
+    // Bind click handlers
+    scrollInner.querySelectorAll('.list-view__chip--tag').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const tag = (chip as HTMLElement).dataset.tag!;
+        this.selectTag(tag);
+      });
+    });
+  }
+
+  private selectTag(tag: string): void {
+    if (this.activeTagFilter === tag) {
+      this.activeTagFilter = null;
+    } else {
+      this.activeTagFilter = tag;
+    }
+    this.renderTagFilter();
+    this.applyFilters();
+  }
+
+  private escapeHtml(text: string): string {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
   private applyFilters(): void {
     const query = this.searchInput.value.toLowerCase();
 
@@ -151,21 +283,31 @@ export class ListView {
         if (!this.activeIntentFilters.has(docIntent)) return false;
       }
 
+      // Tag filter
+      if (this.activeTagFilter) {
+        if (!doc.tags.includes(this.activeTagFilter)) return false;
+      }
+
       return true;
     });
 
     this.selectedIndex = this.filteredDocs.length > 0 ? 0 : -1;
     this.render();
+
+    // Re-render tag filter (available tags may have changed based on state/intent)
+    this.renderTagFilter();
   }
 
   async refresh(): Promise<void> {
     // Show skeleton loading state
     renderSkeletonList(this.listContainer, 5);
 
-    this.docs = await listDocuments();
+    this.docs = await listDomainDocuments();
     this.filteredDocs = [...this.docs];
     this.selectedIndex = -1;
-    this.render();
+
+    // Apply any active filters
+    this.applyFilters();
   }
 
   private render(): void {

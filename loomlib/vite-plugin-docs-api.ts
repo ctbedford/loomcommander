@@ -148,11 +148,23 @@ function parseMarkdownFile(filePath: string): ApiDocument | null {
 
 /**
  * Read all markdown files from docs directory.
+ * Scans both top-level type directories and domain-scoped directories.
  */
 function readAllDocs(docsDir: string): ApiDocument[] {
   const docs: ApiDocument[] = [];
   const types: DocumentType[] = ['framework', 'instance', 'note', 'source', 'index'];
 
+  // Domain types (for nested domain directories)
+  const domainTypes = [
+    // Meta types
+    'command', 'workflow', 'pattern', 'failure-mode', 'audit', 'operation',
+    // Ops types
+    'project', 'brief', 'survey', 'plan', 'task', 'decision', 'retro', 'checkpoint',
+    // Shared
+    'index',
+  ];
+
+  // Read from top-level type directories (etymon/studio documents)
   for (const type of types) {
     const typeDir = path.join(docsDir, type);
     if (!fs.existsSync(typeDir)) continue;
@@ -165,6 +177,30 @@ function readAllDocs(docsDir: string): ApiDocument[] {
       const doc = parseMarkdownFile(filePath);
       if (doc) {
         docs.push(doc);
+      }
+    }
+  }
+
+  // Read from domain-scoped directories (meta/, ops/)
+  const domainDirs = ['meta', 'ops'];
+  for (const domain of domainDirs) {
+    const domainDir = path.join(docsDir, domain);
+    if (!fs.existsSync(domainDir)) continue;
+
+    // Read from each type subdirectory within the domain
+    for (const type of domainTypes) {
+      const typeDir = path.join(domainDir, type);
+      if (!fs.existsSync(typeDir)) continue;
+
+      const files = fs.readdirSync(typeDir).filter(f => f.endsWith('.md'));
+      for (const file of files) {
+        if (EXCLUDED_FILES.includes(file)) continue;
+
+        const filePath = path.join(typeDir, file);
+        const doc = parseMarkdownFile(filePath);
+        if (doc) {
+          docs.push(doc);
+        }
       }
     }
   }
