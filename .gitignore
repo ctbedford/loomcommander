@@ -1,0 +1,10 @@
+# Environment
+.env
+
+# Jira drafts (review before committing)
+jiracc/drafts/tickets/*.md
+
+# Python
+__pycache__/
+*.pyc
+.venv/
