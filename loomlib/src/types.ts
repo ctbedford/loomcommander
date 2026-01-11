@@ -147,6 +147,8 @@ export interface Document {
   tags: string[];
   createdAt: number;
   modifiedAt: number;
+  // Domain membership (for multi-domain support)
+  domain?: string; // 'etymon' | 'studio' | etc. - optional for backward compat
   // Conducting fields (optional for backward compatibility)
   intent?: DocumentIntent;
   execution_state?: ExecutionState;
@@ -169,7 +171,48 @@ export interface GraphEdge {
 }
 
 // View states
-export type ViewMode = 'list' | 'constellation' | 'editor';
+export type ViewMode = 'list' | 'constellation' | 'flow' | 'editor' | 'spatial' | 'deck';
+
+// ─────────────────────────────────────────────────────────────────────
+// DECK VIEW - Grid-based browsing with lens-based sorting
+// ─────────────────────────────────────────────────────────────────────
+
+export type DeckLens = 'type' | 'recency' | 'state' | 'intent' | 'lineage';
+
+export const DECK_LENS_CONFIG: Record<DeckLens, { name: string; key: string; icon: string }> = {
+  type: { name: 'Type', key: '1', icon: '◧' },
+  recency: { name: 'Recency', key: '2', icon: '◔' },
+  state: { name: 'State', key: '3', icon: '●' },
+  intent: { name: 'Intent', key: '4', icon: '⚡' },
+  lineage: { name: 'Lineage', key: '5', icon: '↗' },
+};
+
+// Sort orders for grouped lenses
+export const TYPE_SORT_ORDER: DocumentType[] = ['framework', 'instance', 'source', 'note', 'index'];
+export const STATE_SORT_ORDER: ExecutionState[] = ['in_progress', 'pending', 'completed', 'resolved'];
+export const INTENT_SORT_ORDER: DocumentIntent[] = ['research', 'build', 'produce', 'capture', 'organize'];
+
+// ─────────────────────────────────────────────────────────────────────
+// SPATIAL VIEW - UMAP coordinates and overlays
+// ─────────────────────────────────────────────────────────────────────
+
+// UMAP-projected 2D coordinates
+export interface UmapCoord {
+  docId: string;
+  x: number;
+  y: number;
+  updatedAt: number;
+}
+
+// Overlay types for spatial view
+export type OverlayId = 'type' | 'state' | 'intent' | 'recency' | 'lineage';
+
+// Viewport state for pan/zoom
+export interface Viewport {
+  x: number;
+  y: number;
+  zoom: number;
+}
 
 // Type metadata for UI
 export const TYPE_ICONS: Record<DocumentType, string> = {
@@ -228,6 +271,11 @@ export function getDocumentColor(doc: Document): string {
   return TYPE_COLORS[doc.type];
 }
 
+// Get current domain from env (defaults to 'etymon')
+export function getCurrentDomain(): string {
+  return (import.meta.env.VITE_LOOMLIB_DOMAIN as string) ?? 'etymon';
+}
+
 // Create a new document with defaults
 export function createEmptyDocument(type: DocumentType = 'note'): Document {
   const now = Date.now();
@@ -245,6 +293,8 @@ export function createEmptyDocument(type: DocumentType = 'note'): Document {
     tags: [],
     createdAt: now,
     modifiedAt: now,
+    // Domain membership
+    domain: getCurrentDomain(),
     // Conducting defaults
     intent: DEFAULT_INTENT[type],
     execution_state: 'pending',
