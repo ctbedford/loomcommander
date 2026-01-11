@@ -1,0 +1,417 @@
+/*
+ * Spatial Canvas View
+ * UMAP-projected document positions with overlay system
+ */
+
+/* ========================================
+ * Container - Dark void with subtle gradient
+ * ======================================== */
+.spatial-view {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+
+  /* Planetarium background - slightly different from constellation */
+  background:
+    radial-gradient(
+      ellipse 100% 80% at 50% 50%,
+      oklch(14% 0.012 250) 0%,
+      var(--bg-void) 70%
+    ),
+    var(--bg-void);
+}
+
+.spatial-view:focus {
+  outline: none;
+}
+
+/* Subtle noise texture for depth */
+.spatial-view::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.02;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+/* ========================================
+ * Canvas Layer - Holds all positioned nodes
+ * ======================================== */
+.spatial-view__canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+  transition: transform 0.08s ease-out;
+}
+
+.spatial-view__canvas:active {
+  cursor: grabbing;
+}
+
+/* ========================================
+ * Spatial Nodes - Positioned document cards
+ * ======================================== */
+.spatial-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  max-width: 180px;
+
+  /* Glassmorphism */
+  background: var(--glass-bg), var(--glass-bg-solid);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-top-color: var(--glass-border-highlight);
+  border-left-color: var(--glass-border-highlight);
+  border-radius: var(--radius-md);
+
+  cursor: pointer;
+  user-select: none;
+
+  transition:
+    transform 0.12s ease-out,
+    box-shadow 0.12s ease,
+    border-color 0.12s ease,
+    opacity 0.12s ease;
+}
+
+.spatial-node:hover {
+  background: var(--glass-bg), oklch(22% 0.01 270 / 0.95);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ========================================
+ * Node Components
+ * ======================================== */
+.spatial-node__icon {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  flex-shrink: 0;
+  opacity: 0.9;
+  line-height: 1;
+}
+
+.spatial-node__title {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.spatial-node__intent {
+  font-size: var(--font-size-xs);
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.spatial-node__state {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  letter-spacing: -0.05em;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.spatial-node__state[data-state="pending"] {
+  opacity: 0.4;
+}
+
+.spatial-node__state[data-state="in_progress"] {
+  color: var(--color-instance);
+}
+
+.spatial-node__state[data-state="completed"] {
+  color: var(--color-source);
+}
+
+.spatial-node__state[data-state="resolved"] {
+  color: var(--color-framework);
+}
+
+/* ========================================
+ * Focused Node - Selected state
+ * ======================================== */
+.spatial-node--focused {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-focus);
+  z-index: 100;
+  transform: translate(-50%, -50%) scale(1.05);
+}
+
+/* ========================================
+ * Overlay Bar - Toggle buttons at top
+ * ======================================== */
+.spatial-view__overlay-bar {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  z-index: 50;
+}
+
+.spatial-view__overlay-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.12s ease;
+}
+
+.spatial-view__overlay-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text);
+}
+
+.spatial-view__overlay-btn--active {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--text);
+}
+
+.spatial-view__overlay-icon {
+  font-size: 14px;
+}
+
+.spatial-view__overlay-key {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  opacity: 0.6;
+}
+
+/* ========================================
+ * Status Bar - Bottom info
+ * ======================================== */
+.spatial-view__status {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  display: flex;
+  gap: 12px;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+  z-index: 50;
+}
+
+.spatial-view__status-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ========================================
+ * Empty State - No embeddings
+ * ======================================== */
+.spatial-view__empty {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: var(--text-muted);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+}
+
+.spatial-view__empty--visible {
+  opacity: 1;
+  visibility: visible;
+}
+
+.spatial-view__empty-icon {
+  font-size: 3rem;
+  margin-bottom: var(--space-md);
+  opacity: 0.4;
+}
+
+.spatial-view__empty-text {
+  font-size: var(--font-size-base);
+  margin-bottom: var(--space-sm);
+}
+
+.spatial-view__empty-hint {
+  font-size: var(--font-size-sm);
+  opacity: 0.6;
+}
+
+/* ========================================
+ * OVERLAY SYSTEM - Visual layers
+ * Toggled via CSS classes on canvas
+ * ======================================== */
+
+/* --- Type Overlay --- */
+.spatial-canvas--overlay-type .spatial-node[data-type="framework"] {
+  border-color: var(--color-framework);
+}
+
+.spatial-canvas--overlay-type .spatial-node[data-type="instance"] {
+  border-color: var(--color-instance);
+}
+
+.spatial-canvas--overlay-type .spatial-node[data-type="note"] {
+  border-color: var(--color-note, #8a8a8a);
+}
+
+.spatial-canvas--overlay-type .spatial-node[data-type="source"] {
+  border-color: var(--color-source);
+}
+
+.spatial-canvas--overlay-type .spatial-node[data-type="index"] {
+  border-color: var(--color-index, #c9c9c9);
+}
+
+/* Type overlay background hints */
+.spatial-canvas--overlay-type .spatial-node[data-type="framework"]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--color-framework);
+  opacity: 0.08;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.spatial-canvas--overlay-type .spatial-node[data-type="instance"]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--color-instance);
+  opacity: 0.08;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.spatial-canvas--overlay-type .spatial-node[data-type="source"]::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--color-source);
+  opacity: 0.08;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* --- State Overlay - Border based, no glows --- */
+.spatial-canvas--overlay-state .spatial-node[data-state="pending"] {
+  opacity: 0.5;
+  border-style: dashed;
+}
+
+.spatial-canvas--overlay-state .spatial-node[data-state="in_progress"] {
+  border-left: 3px solid var(--color-instance);
+}
+
+.spatial-canvas--overlay-state .spatial-node[data-state="completed"] {
+  border-left: 3px solid var(--color-source);
+}
+
+.spatial-canvas--overlay-state .spatial-node[data-state="resolved"] {
+  border-left: 3px solid var(--color-framework);
+  opacity: 0.7;
+}
+
+/* --- Intent Overlay --- */
+.spatial-canvas--overlay-intent .spatial-node .spatial-node__intent {
+  opacity: 1;
+  font-size: var(--font-size-sm);
+}
+
+.spatial-canvas--overlay-intent .spatial-node[data-intent="research"] {
+  border-left: 3px solid #60a5fa;
+}
+
+.spatial-canvas--overlay-intent .spatial-node[data-intent="build"] {
+  border-left: 3px solid #f59e0b;
+}
+
+.spatial-canvas--overlay-intent .spatial-node[data-intent="capture"] {
+  border-left: 3px solid #8b5cf6;
+}
+
+.spatial-canvas--overlay-intent .spatial-node[data-intent="produce"] {
+  border-left: 3px solid #10b981;
+}
+
+.spatial-canvas--overlay-intent .spatial-node[data-intent="organize"] {
+  border-left: 3px solid #6b7280;
+}
+
+/* --- Recency Overlay - No glows --- */
+.spatial-canvas--overlay-recency .spatial-node[data-recency="fresh"] {
+  opacity: 1;
+  border-left: 2px solid oklch(80% 0.1 90);
+}
+
+.spatial-canvas--overlay-recency .spatial-node[data-recency="recent"] {
+  opacity: 0.85;
+}
+
+.spatial-canvas--overlay-recency .spatial-node[data-recency="aging"] {
+  opacity: 0.6;
+}
+
+.spatial-canvas--overlay-recency .spatial-node[data-recency="stale"] {
+  opacity: 0.35;
+}
+
+/* --- Lineage Overlay --- */
+/* Future: show tether lines between upstream/downstream */
+.spatial-canvas--overlay-lineage .spatial-node {
+  /* Will be enhanced with tether lines */
+}
+
+/* ========================================
+ * Responsive adjustments
+ * ======================================== */
+@media (max-width: 768px) {
+  .spatial-view__overlay-bar {
+    top: 8px;
+    padding: 2px;
+  }
+
+  .spatial-view__overlay-btn {
+    padding: 4px 8px;
+  }
+
+  .spatial-node {
+    padding: var(--space-xs) var(--space-sm);
+    max-width: 140px;
+  }
+
+  .spatial-node__title {
+    font-size: var(--font-size-xs);
+  }
+}

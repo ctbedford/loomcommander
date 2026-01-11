@@ -1,0 +1,557 @@
+/*
+ * Flow View
+ * Measured vertical production flow: upstream → focus → downstream
+ */
+
+/* ========================================
+ * Animation Keyframes
+ * ======================================== */
+@keyframes flow-node-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes flow-focus-enter {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes flow-zone-label-enter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes flow-arrow-draw {
+  from {
+    stroke-dashoffset: 100;
+    opacity: 0;
+  }
+  to {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+@keyframes flow-sidebar-enter {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Removed: pulse animations replaced with static states */
+
+/* ========================================
+ * Container
+ * ======================================== */
+.flow-view {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg-surface);
+  display: flex;
+  flex-direction: column;
+}
+
+.flow-view:focus {
+  outline: none;
+}
+
+/* ========================================
+ * Header
+ * ======================================== */
+.flow-view__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  flex-shrink: 0;
+}
+
+.flow-view__lens {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: var(--font-size-sm);
+  color: var(--text-secondary);
+}
+
+.flow-view__lens-icon {
+  font-size: var(--font-size-base);
+}
+
+.flow-view__lens-name {
+  font-weight: 500;
+}
+
+/* ========================================
+ * Canvas - Main layout area
+ * ======================================== */
+.flow-view__canvas {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
+  gap: var(--space-md);
+  overflow-y: auto;
+  position: relative;
+
+  /* For focus transition */
+  transition: opacity 150ms ease-out, transform 150ms ease-out;
+}
+
+.flow-view__canvas--exiting {
+  opacity: 0;
+  transform: scale(0.98);
+}
+
+/* ========================================
+ * Zones - Upstream, Focus, Downstream
+ * ======================================== */
+.flow-view__zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  max-width: 600px;
+}
+
+.flow-view__zone-label {
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-tertiary);
+  padding: var(--space-xs) var(--space-md);
+  background: var(--bg-elevated);
+  border-radius: var(--radius-full);
+
+  /* Entrance animation */
+  animation: flow-zone-label-enter 250ms ease-out backwards;
+}
+
+.flow-view__zone--upstream .flow-view__zone-label {
+  animation-delay: 0ms;
+}
+
+.flow-view__zone--downstream .flow-view__zone-label {
+  animation-delay: 400ms;
+}
+
+.flow-view__zone--upstream .flow-view__zone-label {
+  color: oklch(70% 0.1 250);
+}
+
+.flow-view__zone--downstream .flow-view__zone-label {
+  color: oklch(70% 0.1 150);
+}
+
+.flow-view__zone-nodes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-sm);
+}
+
+.flow-view__zone--empty {
+  opacity: 0.5;
+}
+
+.flow-view__zone-empty {
+  font-size: var(--font-size-sm);
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+/* ========================================
+ * Connectors - Arrows between zones
+ * ======================================== */
+.flow-view__connector {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-xs) 0;
+}
+
+.flow-view__connector:first-of-type {
+  --arrow-delay: 150ms;
+}
+
+.flow-view__connector:last-of-type {
+  --arrow-delay: 350ms;
+}
+
+.flow-view__arrow {
+  width: 24px;
+  height: 32px;
+  color: var(--border-default);
+}
+
+.flow-view__arrow path {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: flow-arrow-draw 400ms ease-out forwards;
+  animation-delay: var(--arrow-delay, 200ms);
+}
+
+/* ========================================
+ * Focus Zone - Centered focal node
+ * ======================================== */
+.flow-view__focus-zone {
+  display: flex;
+  justify-content: center;
+  padding: var(--space-md) 0;
+}
+
+/* ========================================
+ * Nodes - Document cards
+ * ======================================== */
+.flow-view__node {
+  --stagger-index: 0;
+
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  max-width: 240px;
+
+  /* Entrance animation with stagger */
+  animation: flow-node-enter 200ms ease-out backwards;
+  animation-delay: calc(100ms + var(--stagger-index) * 50ms);
+
+  /* Smooth transitions for interactions */
+  transition:
+    background 150ms ease-out,
+    border-color 150ms ease-out,
+    transform 150ms ease-out,
+    box-shadow 150ms ease-out;
+}
+
+.flow-view__node:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-default);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px oklch(0% 0 0 / 0.15);
+}
+
+.flow-view__node:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: none;
+}
+
+/* Focus node - Larger, more prominent */
+.flow-view__node--focus {
+  --stagger-index: 0;
+
+  padding: var(--space-md) var(--space-lg);
+  max-width: 320px;
+  background: var(--bg-elevated);
+  border: 2px solid var(--accent-primary);
+  box-shadow: 0 0 0 4px oklch(from var(--accent-primary) l c h / 0.15);
+
+  /* Focus node has its own entrance animation */
+  animation: flow-focus-enter 300ms ease-out backwards;
+  animation-delay: 200ms;
+}
+
+.flow-view__node--focus:hover {
+  background: var(--bg-hover);
+  border-color: var(--accent-primary);
+  transform: translateY(-2px);
+  box-shadow:
+    0 0 0 4px oklch(from var(--accent-primary) l c h / 0.15),
+    0 8px 24px oklch(0% 0 0 / 0.2);
+}
+
+/* Execution state treatments - static, no animations */
+.flow-view__node--pending {
+  border-style: dashed;
+  opacity: 0.6;
+  animation: flow-node-enter 200ms ease-out backwards;
+  animation-delay: calc(100ms + var(--stagger-index) * 50ms);
+}
+
+.flow-view__node--in_progress {
+  border-left: 3px solid var(--color-instance);
+  animation: flow-node-enter 200ms ease-out backwards;
+  animation-delay: calc(100ms + var(--stagger-index) * 50ms);
+}
+
+.flow-view__node--resolved {
+  opacity: 0.5;
+  filter: grayscale(0.3);
+}
+
+/* Focus node state overrides - static */
+.flow-view__node--focus.flow-view__node--pending {
+  animation: flow-focus-enter 300ms ease-out backwards;
+  animation-delay: 200ms;
+  opacity: 0.7;
+}
+
+.flow-view__node--focus.flow-view__node--in_progress {
+  animation: flow-focus-enter 300ms ease-out backwards;
+  animation-delay: 200ms;
+  border-left: 3px solid var(--color-instance);
+}
+
+/* Node icon */
+.flow-view__node-icon {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.flow-view__node--focus .flow-view__node-icon {
+  font-size: 1.5rem;
+}
+
+/* Node content */
+.flow-view__node-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.flow-view__node-title {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.flow-view__node--focus .flow-view__node-title {
+  font-size: var(--font-size-base);
+}
+
+.flow-view__node-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+}
+
+.flow-view__node-type {
+  text-transform: capitalize;
+}
+
+.flow-view__node-status {
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.flow-view__node-status--incubating {
+  background: oklch(50% 0.1 60 / 0.2);
+  color: oklch(70% 0.15 60);
+}
+
+.flow-view__node-status--draft {
+  background: oklch(50% 0.1 250 / 0.2);
+  color: oklch(70% 0.15 250);
+}
+
+.flow-view__node-status--verified {
+  background: oklch(50% 0.1 150 / 0.2);
+  color: oklch(70% 0.15 150);
+}
+
+.flow-view__node-status--captured {
+  background: oklch(50% 0.1 300 / 0.2);
+  color: oklch(70% 0.15 300);
+}
+
+/* Relation label */
+.flow-view__node-relation {
+  font-size: var(--font-size-xs);
+  color: var(--text-tertiary);
+  font-style: italic;
+}
+
+/* Overflow indicator */
+.flow-view__overflow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-sm);
+  color: var(--text-tertiary);
+  background: var(--bg-elevated);
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+}
+
+.flow-view__overflow:hover {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+/* ========================================
+ * Sidebar - Siblings
+ * ======================================== */
+.flow-view__sidebar {
+  position: absolute;
+  right: var(--space-lg);
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  max-width: 180px;
+
+  /* Entrance animation */
+  animation: flow-sidebar-enter 300ms ease-out backwards;
+  animation-delay: 500ms;
+}
+
+.flow-view__sidebar-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-tertiary);
+  padding-bottom: var(--space-xs);
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.flow-view__sidebar-mode {
+  font-size: var(--font-size-sm);
+  cursor: help;
+}
+
+.flow-view__sidebar-mode--semantic {
+  color: oklch(70% 0.2 280);
+}
+
+.flow-view__sidebar-mode--fallback {
+  color: var(--text-tertiary);
+  opacity: 0.6;
+}
+
+.flow-view__sidebar-nodes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+/* Compact nodes for sidebar */
+.flow-view__compact-node {
+  --compact-index: 0;
+
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  font-size: var(--font-size-xs);
+  color: var(--text-secondary);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+
+  /* Entrance animation with stagger */
+  animation: flow-node-enter 200ms ease-out backwards;
+  animation-delay: calc(550ms + var(--compact-index) * 40ms);
+
+  transition:
+    background 150ms ease-out,
+    border-color 150ms ease-out,
+    transform 150ms ease-out;
+}
+
+.flow-view__compact-node:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-default);
+  color: var(--text-primary);
+  transform: translateX(-2px);
+}
+
+.flow-view__compact-icon {
+  font-size: var(--font-size-sm);
+  flex-shrink: 0;
+}
+
+.flow-view__compact-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ========================================
+ * Empty state
+ * ======================================== */
+.flow-view__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-tertiary);
+}
+
+/* ========================================
+ * Responsive adjustments
+ * ======================================== */
+@media (max-width: 768px) {
+  .flow-view__sidebar {
+    position: static;
+    transform: none;
+    max-width: 100%;
+    margin-top: var(--space-lg);
+    padding: var(--space-md);
+    background: var(--bg-elevated);
+    border-radius: var(--radius-md);
+  }
+
+  .flow-view__sidebar-nodes {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .flow-view__node {
+    max-width: 100%;
+  }
+}

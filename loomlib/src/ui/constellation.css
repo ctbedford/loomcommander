@@ -535,7 +535,7 @@
 
 .constellation-slot-indicator--active {
   border-color: var(--accent);
-  box-shadow: 0 0 8px rgba(var(--accent-rgb, 100, 149, 237), 0.3);
+  background: oklch(from var(--accent) l c h / 0.15);
 }
 
 .constellation-slot-indicator__label {

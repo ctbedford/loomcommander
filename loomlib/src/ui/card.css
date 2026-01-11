@@ -154,37 +154,16 @@
 }
 
 /* ========================================
- * Incubating Status - Warm amber pulse
+ * Incubating Status - Static amber border
+ * No animations, clear visual indicator
  * ======================================== */
 .doc-card--incubating {
-  animation: card-incubating-pulse 3s ease-in-out infinite;
+  border-left: 2px solid var(--status-incubating-color);
 }
 
-@keyframes card-incubating-pulse {
-  0%, 100% {
-    box-shadow: var(--status-incubating-glow);
-  }
-  50% {
-    box-shadow: var(--status-incubating-glow-bright);
-  }
-}
-
-/* Selected + incubating */
+/* Selected + incubating - combine border and selection */
 .doc-card--selected.doc-card--incubating {
-  animation: card-incubating-pulse-selected 3s ease-in-out infinite;
-}
-
-@keyframes card-incubating-pulse-selected {
-  0%, 100% {
-    box-shadow:
-      var(--shadow-focus),
-      var(--status-incubating-glow);
-  }
-  50% {
-    box-shadow:
-      var(--shadow-focus),
-      var(--status-incubating-glow-bright);
-  }
+  border-left: 2px solid var(--status-incubating-color);
 }
 
 /* ========================================

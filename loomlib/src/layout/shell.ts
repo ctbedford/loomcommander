@@ -3,6 +3,9 @@ import { createDocument } from '../data/documents.ts';
 import { ListView } from '../views/list.ts';
 import { Editor } from '../views/editor.ts';
 import { ConstellationView } from '../views/constellation.ts';
+import { FlowView } from '../views/flow.ts';
+import { SpatialView } from '../views/spatial.ts';
+import { DeckView } from '../views/deck.ts';
 
 export interface ShellOptions {
   onTriageRequest?: (docId: string | null) => void;
@@ -12,6 +15,9 @@ export class Shell {
   private container: HTMLElement;
   private listView: ListView;
   private constellationView: ConstellationView;
+  private flowView: FlowView;
+  private spatialView: SpatialView;
+  private deckView: DeckView;
   private editor: Editor;
   private currentView: ViewMode = 'list';
   private options: ShellOptions;
@@ -30,6 +36,18 @@ export class Shell {
     constellationContainer.className = 'shell__view shell__view--constellation';
     this.container.appendChild(constellationContainer);
 
+    const flowContainer = document.createElement('div');
+    flowContainer.className = 'shell__view shell__view--flow';
+    this.container.appendChild(flowContainer);
+
+    const spatialContainer = document.createElement('div');
+    spatialContainer.className = 'shell__view shell__view--spatial';
+    this.container.appendChild(spatialContainer);
+
+    const deckContainer = document.createElement('div');
+    deckContainer.className = 'shell__view shell__view--deck';
+    this.container.appendChild(deckContainer);
+
     const editorContainer = document.createElement('div');
     editorContainer.className = 'shell__view shell__view--editor';
     this.container.appendChild(editorContainer);
@@ -38,6 +56,8 @@ export class Shell {
     this.listView = new ListView(listContainer, {
       onDocumentSelect: (doc) => this.openDocument(doc),
       onNewDocument: () => this.createNewDocument(),
+      onGoToFlow: () => this.showFlow(),
+      onGoToDeck: () => this.showDeck(),
     });
 
     this.constellationView = new ConstellationView(constellationContainer, {
@@ -47,11 +67,34 @@ export class Shell {
       onDocumentOpen: (doc) => this.openDocument(doc),
     });
 
+    this.flowView = new FlowView(flowContainer, {
+      onDocumentSelect: () => {
+        // Just update focus in flow view
+      },
+      onDocumentOpen: (doc) => this.openDocument(doc),
+    });
+
+    this.spatialView = new SpatialView(spatialContainer, {
+      onDocumentSelect: () => {
+        // Just update focus in spatial view
+      },
+      onDocumentOpen: (doc) => this.openDocument(doc),
+    });
+
+    this.deckView = new DeckView(deckContainer, {
+      onDocumentSelect: () => {
+        // Just update focus in deck view
+      },
+      onDocumentOpen: (doc) => this.openDocument(doc),
+    });
+
     this.editor = new Editor(editorContainer, {
       onBack: () => this.showList(),
       onTriage: (docId) => this.options.onTriageRequest?.(docId),
       onGoToList: () => this.showList(),
       onGoToConstellation: () => this.showConstellation(),
+      onGoToFlow: () => this.showFlow(),
+      onGoToDeck: () => this.showDeck(),
     });
 
     // Global keyboard shortcuts
@@ -66,10 +109,24 @@ export class Shell {
   private handleGlobalKeydown = (e: KeyboardEvent): void => {
     const isMod = e.metaKey || e.ctrlKey;
 
-    // Cmd+Shift+V: Toggle view (list -> constellation -> editor cycle)
+    // Cmd+Shift+V: Toggle view (list -> constellation -> flow -> spatial -> editor cycle)
     if (isMod && e.shiftKey && e.key.toLowerCase() === 'v') {
       e.preventDefault();
       this.toggleView();
+      return;
+    }
+
+    // Cmd+Shift+S: Go to spatial view directly
+    if (isMod && e.shiftKey && e.key.toLowerCase() === 's') {
+      e.preventDefault();
+      this.showSpatial();
+      return;
+    }
+
+    // Cmd+Shift+D: Go to deck view directly
+    if (isMod && e.shiftKey && e.key.toLowerCase() === 'd') {
+      e.preventDefault();
+      this.showDeck();
       return;
     }
 
@@ -104,18 +161,33 @@ export class Shell {
         this.showList();
       } else if (this.currentView === 'constellation') {
         this.showList();
+      } else if (this.currentView === 'flow') {
+        this.showList();
+      } else if (this.currentView === 'spatial') {
+        this.showList();
+      } else if (this.currentView === 'deck') {
+        this.showList();
       }
       return;
     }
   };
 
   private toggleView(): void {
-    // Cycle: list -> constellation -> editor (if doc open) -> list
+    // Cycle: list -> constellation -> flow -> spatial -> deck -> editor (if doc open) -> list
     switch (this.currentView) {
       case 'list':
         this.showConstellation();
         break;
       case 'constellation':
+        this.showFlow();
+        break;
+      case 'flow':
+        this.showSpatial();
+        break;
+      case 'spatial':
+        this.showDeck();
+        break;
+      case 'deck':
         const docId = this.editor.getCurrentDocId();
         if (docId) {
           this.showEditor();
@@ -133,6 +205,9 @@ export class Shell {
     this.currentView = 'list';
     this.editor.hide();
     this.constellationView.hide();
+    this.flowView.hide();
+    this.spatialView.hide();
+    this.deckView.hide();
     this.listView.show();
     this.listView.refresh();
     this.listView.focus();
@@ -142,14 +217,61 @@ export class Shell {
     this.currentView = 'constellation';
     this.listView.hide();
     this.editor.hide();
+    this.flowView.hide();
+    this.spatialView.hide();
+    this.deckView.hide();
     this.constellationView.show();
     this.constellationView.focus();
+  }
+
+  private showFlow(): void {
+    this.currentView = 'flow';
+    this.listView.hide();
+    this.editor.hide();
+    this.constellationView.hide();
+    this.spatialView.hide();
+    this.deckView.hide();
+
+    // If coming from editor, focus flow view on current doc
+    // Use skipRender=true since show() will call refresh() which renders
+    const currentDocId = this.editor.getCurrentDocId();
+    if (currentDocId) {
+      this.flowView.setFocus(currentDocId, true);
+    }
+
+    this.flowView.show();
+    this.flowView.focus();
+  }
+
+  private showSpatial(): void {
+    this.currentView = 'spatial';
+    this.listView.hide();
+    this.editor.hide();
+    this.constellationView.hide();
+    this.flowView.hide();
+    this.deckView.hide();
+    this.spatialView.show();
+    this.spatialView.focus();
+  }
+
+  private showDeck(): void {
+    this.currentView = 'deck';
+    this.listView.hide();
+    this.editor.hide();
+    this.constellationView.hide();
+    this.flowView.hide();
+    this.spatialView.hide();
+    this.deckView.show();
+    this.deckView.focus();
   }
 
   private showEditor(): void {
     this.currentView = 'editor';
     this.listView.hide();
     this.constellationView.hide();
+    this.flowView.hide();
+    this.spatialView.hide();
+    this.deckView.hide();
     this.editor.show();
     this.editor.focus();
   }
@@ -180,6 +302,15 @@ export class Shell {
         break;
       case 'constellation':
         await this.constellationView.refresh();
+        break;
+      case 'flow':
+        await this.flowView.refresh();
+        break;
+      case 'spatial':
+        await this.spatialView.refresh();
+        break;
+      case 'deck':
+        await this.deckView.refresh();
         break;
     }
   }

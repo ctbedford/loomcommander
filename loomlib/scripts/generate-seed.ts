@@ -53,6 +53,9 @@ const VALID_FRAMEWORK_KINDS: FrameworkKind[] = ['toolkit', 'domain'];
 // Files to exclude
 const EXCLUDED_FILES = ['aesthetic-invariants.md'];
 
+// Folders to exclude (other domains have their own types/statuses)
+const EXCLUDED_FOLDERS = ['ops', 'meta', 'studio'];
+
 function validateDocument(filePath: string, data: Record<string, unknown>, content: string): { doc: SeedDoc | null; errors: string[] } {
   const errors: string[] = [];
 
@@ -195,10 +198,21 @@ async function main() {
 
   for await (const file of glob(pattern)) {
     const basename = path.basename(file);
+    const relativePath = path.relative(docsDir, file);
+
+    // Exclude specific files
     if (EXCLUDED_FILES.includes(basename)) {
       console.log(`EXCLUDE: ${basename}`);
       continue;
     }
+
+    // Exclude files in other domain folders
+    const topFolder = relativePath.split(path.sep)[0];
+    if (EXCLUDED_FOLDERS.includes(topFolder)) {
+      console.log(`EXCLUDE (domain): ${relativePath}`);
+      continue;
+    }
+
     files.push(file);
   }
 

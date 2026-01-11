@@ -71,9 +71,15 @@
   font-size: var(--font-size-sm);
   cursor: pointer;
   transition:
-    background var(--transition-fast),
-    color var(--transition-fast),
-    border-color var(--transition-fast);
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.editor-view__preview-toggle:active,
+.editor-view__triage-btn:active {
+  transform: scale(0.95);
 }
 
 .editor-view__preview-toggle:hover,
@@ -216,50 +222,6 @@
   color: var(--text-muted);
 }
 
-/* ========================================
- * Relations Bar (upstream/downstream)
- * ======================================== */
-.editor-view__relations {
-  display: none;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-xs) var(--space-md);
-  background: var(--bg-elevated);
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-  min-height: 28px;
-  font-size: var(--font-size-xs);
-  overflow-x: auto;
-}
-
-.editor-view__rel-label {
-  color: var(--text-muted);
-  flex-shrink: 0;
-}
-
-.editor-view__rel-link {
-  color: var(--text);
-  cursor: pointer;
-  padding: 2px 6px;
-  border-radius: var(--radius-sm);
-  transition: background var(--transition-fast);
-  white-space: nowrap;
-}
-
-.editor-view__rel-link:hover {
-  background: var(--bg-subtle);
-  color: var(--accent);
-}
-
-.editor-view__rel-divider {
-  color: var(--text-muted);
-  margin: 0 var(--space-xs);
-}
-
-.editor-view__rel-downstream {
-  color: var(--text-muted);
-  white-space: nowrap;
-}
 
 /* ========================================
  * Save Status Indicator
@@ -311,10 +273,12 @@
   display: flex;
   min-height: 0;
   overflow: hidden;
+  position: relative;
 }
 
 .editor-view__textarea {
   flex: 1;
+  min-width: 0; /* Allow shrinking in flex for sidebar reflow */
   padding: var(--space-lg);
   border: none;
   background: transparent;
@@ -329,6 +293,21 @@
 
   resize: none;
   outline: none;
+
+  /* Animation for preview toggle */
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
+}
+
+/* When preview is shown, hide textarea with animation */
+.editor-view--preview .editor-view__textarea {
+  opacity: 0;
+  transform: translateX(-20px);
+  pointer-events: none;
+  position: absolute;
+  width: 100%;
+  height: 100%;
 }
 
 .editor-view__textarea::placeholder {
@@ -344,11 +323,10 @@
  * Preview Pane
  * ======================================== */
 .editor-view__preview {
-  display: none;
   flex: 1;
+  min-width: 0; /* Allow shrinking in flex for sidebar reflow */
   padding: var(--space-lg);
   overflow-y: auto;
-  border-left: 1px solid var(--border);
   background: var(--bg);
 
   /* Typography */
@@ -356,11 +334,27 @@
   font-size: var(--font-size-base);
   line-height: var(--line-height);
   color: var(--text);
+
+  /* Animation - hidden by default (editor mode) */
+  opacity: 0;
+  transform: translateX(20px);
+  pointer-events: none;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease;
 }
 
 /* Show preview in preview mode */
 .editor-view--preview .editor-view__preview {
-  display: block;
+  opacity: 1;
+  transform: translateX(0);
+  pointer-events: auto;
+  position: relative;
+  width: auto;
+  height: auto;
 }
 
 /* Preview content styling */
@@ -489,9 +483,424 @@
   padding: var(--space-xl);
   max-width: 720px;
   width: 100%;
+  /* Override preview mode hiding in focus mode */
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+  position: relative;
 }
 
 /* Hide preview in focus mode */
 .editor-view--focus .editor-view__preview {
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
+/* ========================================
+ * Related Panel (Sidebar)
+ * ======================================== */
+
+/* Related toggle button */
+.editor-view__related-toggle {
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.editor-view__related-toggle:active {
+  transform: scale(0.95);
+}
+
+.editor-view__related-toggle:hover {
+  background: var(--bg-subtle);
+  color: var(--text);
+}
+
+.editor-view__related-toggle--active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: oklch(100% 0 0);
+}
+
+.editor-view__related-toggle--active:hover {
+  background: var(--accent);
+  filter: brightness(1.1);
+}
+
+/* Related container - flex child, not absolute */
+.editor-view__related {
+  flex-shrink: 0;
+  width: 0;
+  overflow: hidden;
+  background: var(--bg-elevated);
+  border-left: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  /* Smooth reflow animation */
+  transition:
+    width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.25s ease,
+    border-color 0.3s ease;
+}
+
+/* Show related when active - content reflows to accommodate */
+.editor-view--related .editor-view__related {
+  width: 200px;
+  opacity: 1;
+  border-left-color: var(--border);
+}
+
+/* Related header */
+.editor-view__related-header {
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+/* Related content (scrollable) */
+.editor-view__related-content {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Related section (upstream/downstream/similar) */
+.editor-view__related-section {
+  padding: var(--space-sm) var(--space-sm);
+  border-bottom: 1px solid var(--border);
+}
+
+.editor-view__related-section:last-child {
+  border-bottom: none;
+}
+
+/* Section label */
+.editor-view__related-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin-bottom: var(--space-xs);
+}
+
+/* Semantic/fallback mode indicator */
+.editor-view__related-mode {
+  font-size: var(--font-size-xs);
+  cursor: help;
+}
+
+.editor-view__related-mode--semantic {
+  color: oklch(70% 0.2 280);
+}
+
+.editor-view__related-mode--fallback {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+/* Related nodes container */
+.editor-view__related-nodes {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* Empty state */
+.editor-view__related-empty {
+  padding: var(--space-lg) var(--space-md);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+}
+
+/* Individual related node */
+@keyframes rel-node-enter {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.editor-view__rel-node {
+  --rel-index: 0;
+
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 4px 6px;
+  font-size: var(--font-size-xs);
+  color: var(--text);
+  background: var(--bg-subtle);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+
+  /* Entrance animation - starts after sidebar begins opening */
+  animation: rel-node-enter 200ms ease-out backwards;
+  animation-delay: calc(120ms + var(--rel-index) * 30ms);
+
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.editor-view__rel-node:hover {
+  background: var(--bg);
+  border-color: var(--border);
+  transform: translateX(-2px);
+}
+
+.editor-view__rel-icon {
+  font-size: var(--font-size-sm);
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.editor-view__rel-title {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.editor-view__rel-type {
+  font-size: 9px;
+  color: var(--text-muted);
+  text-transform: lowercase;
+  flex-shrink: 0;
+  opacity: 0.7;
+}
+
+.editor-view__rel-overflow {
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 2px 6px;
+  text-align: center;
+}
+
+/* Hide related in focus mode */
+.editor-view--focus .editor-view__related {
   display: none;
+}
+
+.editor-view--focus .editor-view__related-toggle {
+  display: none;
+}
+
+/* ========================================
+ * Outline Panel (Left Sidebar)
+ * ======================================== */
+
+/* Outline toggle button */
+.editor-view__outline-toggle {
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.15s ease;
+}
+
+.editor-view__outline-toggle:active {
+  transform: scale(0.95);
+}
+
+.editor-view__outline-toggle:hover {
+  background: var(--bg-subtle);
+  color: var(--text);
+}
+
+.editor-view__outline-toggle--active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: oklch(100% 0 0);
+}
+
+.editor-view__outline-toggle--active:hover {
+  background: var(--accent);
+  filter: brightness(1.1);
+}
+
+/* Outline container - flex child on left side */
+.editor-view__outline {
+  flex-shrink: 0;
+  width: 0;
+  overflow: hidden;
+  background: var(--bg-elevated);
+  border-right: 1px solid transparent;
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  /* Smooth reflow animation */
+  transition:
+    width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.25s ease,
+    border-color 0.3s ease;
+}
+
+/* Show outline when active */
+.editor-view--outline .editor-view__outline {
+  width: 180px;
+  opacity: 1;
+  border-right-color: var(--border);
+}
+
+/* Outline header */
+.editor-view__outline-header {
+  padding: var(--space-sm) var(--space-md);
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+/* Outline content (scrollable) */
+.editor-view__outline-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Empty state */
+.editor-view__outline-empty {
+  padding: var(--space-lg) var(--space-md);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  font-style: italic;
+  text-align: center;
+}
+
+/* Outline item entrance animation */
+@keyframes outline-item-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Individual outline item */
+.editor-view__outline-item {
+  --outline-index: 0;
+
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  background: transparent;
+  border-left: 2px solid transparent;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  cursor: pointer;
+
+  /* Entrance animation */
+  animation: outline-item-enter 180ms ease-out backwards;
+  animation-delay: calc(80ms + var(--outline-index) * 25ms);
+
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.editor-view__outline-item:hover {
+  background: var(--bg-subtle);
+  color: var(--text);
+}
+
+/* Active item - currently visible in preview */
+.editor-view__outline-item--active {
+  background: var(--bg-subtle);
+  border-left-color: var(--accent);
+  color: var(--text);
+}
+
+/* Hierarchy indentation */
+.editor-view__outline-item--h1 {
+  padding-left: 8px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.editor-view__outline-item--h2 {
+  padding-left: 16px;
+}
+
+.editor-view__outline-item--h3 {
+  padding-left: 24px;
+  font-size: 11px;
+}
+
+.editor-view__outline-item--h4 {
+  padding-left: 32px;
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+/* Outline text truncation */
+.editor-view__outline-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* Hide outline in focus mode */
+.editor-view--focus .editor-view__outline {
+  display: none;
+}
+
+.editor-view--focus .editor-view__outline-toggle {
+  display: none;
+}
+
+/* Hide outline when not in preview mode (outline needs rendered headings) */
+.editor-view:not(.editor-view--preview) .editor-view__outline {
+  width: 0;
+  opacity: 0;
+  border-right-color: transparent;
 }

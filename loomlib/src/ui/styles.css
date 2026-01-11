@@ -96,6 +96,12 @@ body {
 .shell__view {
   position: absolute;
   inset: 0;
+  z-index: 1;
+}
+
+/* Editor should be above other views */
+.shell__view--editor {
+  z-index: 10;
 }
 
 /* Hide all views by default - use !important to override view-specific display rules */

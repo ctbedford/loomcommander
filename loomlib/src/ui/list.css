@@ -22,8 +22,14 @@
   flex-shrink: 0;
 }
 
+.list-view__top-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
 .list-view__search {
-  width: 100%;
+  flex: 1;
   padding: var(--space-sm) var(--space-md);
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
@@ -41,6 +47,37 @@
 
 .list-view__search::placeholder {
   color: var(--placeholder);
+}
+
+/* Nav buttons */
+.list-view__nav {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.list-view__nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  font-size: var(--font-size-base);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.list-view__nav-btn:hover {
+  background: var(--bg-subtle);
+  border-color: var(--border-focus);
+  color: var(--text);
 }
 
 /* ========================================
@@ -111,6 +148,129 @@
 .list-view__chip--intent {
   font-family: var(--font-sans);
   font-size: var(--font-size-sm);
+}
+
+/* ========================================
+ * Tag Filter - Scrolling tag row
+ * ======================================== */
+.list-view__tag-filter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+  height: 28px;
+  overflow: hidden;
+}
+
+.list-view__tag-filter--hidden {
+  display: none;
+}
+
+/* Selected tag - static position on the left */
+.list-view__tag-selected {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  max-width: 0;
+  opacity: 0;
+  transition:
+    max-width 200ms ease-out,
+    opacity 200ms ease-out;
+}
+
+.list-view__tag-selected--active {
+  max-width: 150px;
+  opacity: 1;
+}
+
+/* Separator between selected and scroll */
+.list-view__tag-selected--active::after {
+  content: '';
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+  margin-left: var(--space-sm);
+  flex-shrink: 0;
+}
+
+/* Scrolling container */
+.list-view__tag-scroll {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  /* Fade edges for infinite scroll feel */
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 10%,
+    black 90%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 10%,
+    black 90%,
+    transparent 100%
+  );
+}
+
+.list-view__tag-scroll--empty {
+  display: none;
+}
+
+/* Inner wrapper with animation */
+.list-view__tag-scroll-inner {
+  display: inline-flex;
+  gap: var(--space-xs);
+  animation: tag-scroll var(--tag-scroll-duration, 120s) linear infinite;
+  white-space: nowrap;
+}
+
+/* Pause on hover */
+.list-view__tag-scroll:hover .list-view__tag-scroll-inner {
+  animation-play-state: paused;
+}
+
+/* Tag chip styling */
+.list-view__chip--tag {
+  white-space: nowrap;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.list-view__chip--tag:hover {
+  max-width: none;
+}
+
+/* Click feedback animation */
+.list-view__chip--tag:active {
+  transform: scale(0.95);
+}
+
+/* Animation keyframe */
+@keyframes tag-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .list-view__tag-scroll-inner {
+    animation: none;
+  }
+
+  .list-view__tag-scroll {
+    overflow-x: auto;
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
 }
 
 /* ========================================

@@ -1,0 +1,668 @@
+/*
+ * Deck View
+ * Grid-based document browsing with lens-based sorting
+ */
+
+/* ========================================
+ * Container
+ * ======================================== */
+.deck-view {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: var(--bg);
+  /* Contain everything - prevent cards from escaping during transitions */
+  overflow: hidden;
+  contain: layout style paint;
+}
+
+.deck-view:focus {
+  outline: none;
+}
+
+/* ========================================
+ * Lens Bar - Top navigation
+ * ======================================== */
+.deck-view__lens-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 12px 16px;
+  background: var(--bg-elevated);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.deck-view__lens-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.deck-view__lens-btn:hover {
+  background: var(--bg-subtle);
+  border-color: var(--border-focus);
+  color: var(--text);
+}
+
+.deck-view__lens-btn--active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: oklch(100% 0 0);
+}
+
+.deck-view__lens-btn--active:hover {
+  filter: brightness(1.1);
+}
+
+.deck-view__lens-icon {
+  font-size: var(--font-size-base);
+}
+
+.deck-view__lens-name {
+  font-weight: 500;
+}
+
+.deck-view__lens-key {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  opacity: 0.6;
+  margin-left: 2px;
+}
+
+.deck-view__lens-btn--active .deck-view__lens-key {
+  opacity: 0.8;
+}
+
+/* ========================================
+ * Search Bar
+ * ======================================== */
+.deck-view__search-bar {
+  padding: 8px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.deck-view__search {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-elevated);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.deck-view__search:focus {
+  border-color: var(--accent);
+}
+
+.deck-view__search::placeholder {
+  color: var(--placeholder);
+}
+
+/* ========================================
+ * Tag Filter - Scrolling tag row
+ * ======================================== */
+.deck-view__tag-filter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0 16px 8px;
+  height: 32px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.deck-view__tag-filter--hidden {
+  display: none;
+}
+
+/* Selected tag - static position on the left */
+.deck-view__tag-selected {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  max-width: 0;
+  opacity: 0;
+  transition:
+    max-width 200ms ease-out,
+    opacity 200ms ease-out;
+}
+
+.deck-view__tag-selected--active {
+  max-width: 150px;
+  opacity: 1;
+}
+
+/* Separator between selected and scroll */
+.deck-view__tag-selected--active::after {
+  content: '';
+  width: 1px;
+  height: 16px;
+  background: var(--border);
+  margin-left: var(--space-sm);
+  flex-shrink: 0;
+}
+
+/* Scrolling container */
+.deck-view__tag-scroll {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  /* Fade edges for infinite scroll feel */
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 10%,
+    black 90%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 10%,
+    black 90%,
+    transparent 100%
+  );
+}
+
+.deck-view__tag-scroll--empty {
+  display: none;
+}
+
+/* Inner wrapper with animation */
+.deck-view__tag-scroll-inner {
+  display: inline-flex;
+  gap: var(--space-xs);
+  animation: deck-tag-scroll var(--tag-scroll-duration, 120s) linear infinite;
+  white-space: nowrap;
+}
+
+/* Pause on hover */
+.deck-view__tag-scroll:hover .deck-view__tag-scroll-inner {
+  animation-play-state: paused;
+}
+
+/* Tag chip base styling */
+.deck-view__chip {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  font-family: var(--font-mono);
+  cursor: pointer;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.deck-view__chip:hover {
+  background: var(--bg-subtle);
+  border-color: var(--border-focus);
+  color: var(--text);
+}
+
+.deck-view__chip--active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: oklch(100% 0 0);
+}
+
+.deck-view__chip--active:hover {
+  filter: brightness(1.1);
+}
+
+/* Tag chip specific styling */
+.deck-view__chip--tag {
+  white-space: nowrap;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.deck-view__chip--tag:hover {
+  max-width: none;
+}
+
+/* Click feedback */
+.deck-view__chip--tag:active {
+  transform: scale(0.95);
+}
+
+/* Animation keyframe */
+@keyframes deck-tag-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  .deck-view__tag-scroll-inner {
+    animation: none;
+  }
+
+  .deck-view__tag-scroll {
+    overflow-x: auto;
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+}
+
+/* ========================================
+ * Grid Container
+ * ======================================== */
+.deck-view__grid {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  align-content: start;
+  /* Contain cards within grid bounds */
+  contain: layout style;
+}
+
+/* ========================================
+ * Section Headers (for grouped lenses)
+ * ======================================== */
+.deck-view__section {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  margin-top: 8px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.deck-view__section:first-child {
+  margin-top: 0;
+}
+
+.deck-view__section-icon {
+  font-size: var(--font-size-base);
+}
+
+.deck-view__section-count {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  opacity: 0.7;
+}
+
+/* ========================================
+ * Deck Card - Compact grid cell
+ * ======================================== */
+.deck-card {
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  min-height: 70px;
+
+  /* Glassmorphism */
+  background: var(--glass-bg), var(--glass-bg-solid);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-top-color: var(--glass-border-highlight);
+  border-left-color: var(--glass-border-highlight);
+  border-radius: var(--radius-md);
+
+  cursor: pointer;
+  user-select: none;
+
+  transition:
+    transform 0.2s ease-out,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.deck-card:hover {
+  background: var(--glass-bg), oklch(22% 0.01 270 / 0.95);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-2px);
+}
+
+/* Focused card (keyboard navigation) */
+.deck-card--focused {
+  border-color: var(--accent);
+  box-shadow: var(--shadow-focus);
+  z-index: 2;
+}
+
+/* Filtered out (search mismatch) */
+.deck-card--dimmed {
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+/* ========================================
+ * Card Header - Icon + Title
+ * ======================================== */
+.deck-card__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.deck-card__icon {
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  line-height: 1;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+/* Type-specific icon colors */
+.deck-card[data-type="framework"] .deck-card__icon {
+  color: var(--color-framework);
+}
+
+.deck-card[data-type="instance"] .deck-card__icon {
+  color: var(--color-instance);
+}
+
+.deck-card[data-type="source"] .deck-card__icon {
+  color: var(--color-source);
+}
+
+.deck-card[data-type="note"] .deck-card__icon {
+  color: var(--color-note, #8a8a8a);
+}
+
+.deck-card[data-type="index"] .deck-card__icon {
+  color: var(--color-index, #c9c9c9);
+}
+
+.deck-card__title {
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.3;
+  /* Allow 2 lines, then ellipsis */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex: 1;
+}
+
+/* ========================================
+ * Card Footer - State + Intent + Type
+ * ======================================== */
+.deck-card__footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  font-size: var(--font-size-xs);
+}
+
+.deck-card__state {
+  font-family: var(--font-mono);
+  letter-spacing: -0.05em;
+  color: var(--text-muted);
+}
+
+.deck-card__state[data-state="pending"] {
+  opacity: 0.5;
+}
+
+.deck-card__state[data-state="in_progress"] {
+  color: var(--color-instance);
+}
+
+.deck-card__state[data-state="completed"] {
+  color: var(--color-source);
+}
+
+.deck-card__state[data-state="resolved"] {
+  color: var(--color-framework);
+}
+
+.deck-card__intent {
+  opacity: 0.7;
+}
+
+.deck-card__type {
+  margin-left: auto;
+  color: var(--text-muted);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  opacity: 0.6;
+}
+
+/* ========================================
+ * Status Bar - Bottom info
+ * ======================================== */
+.deck-view__status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-elevated);
+  font-size: var(--font-size-xs);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.deck-view__status-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.deck-view__status-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-mono);
+}
+
+/* ========================================
+ * Empty State
+ * ======================================== */
+.deck-view__empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: var(--text-muted);
+  padding: var(--space-xl);
+  font-size: var(--font-size-base);
+  opacity: 0.7;
+}
+
+/* ========================================
+ * FLIP Animation Classes
+ * ======================================== */
+.deck-card--animating {
+  will-change: transform;
+}
+
+/* ========================================
+ * Lens-specific Card Treatments
+ * ======================================== */
+
+/* Type lens - subtle background tints */
+.deck-view--lens-type .deck-card[data-type="framework"]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--color-framework);
+  opacity: 0.05;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.deck-view--lens-type .deck-card[data-type="instance"]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--color-instance);
+  opacity: 0.05;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.deck-view--lens-type .deck-card[data-type="source"]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--color-source);
+  opacity: 0.05;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Need position relative for pseudo-elements */
+.deck-view--lens-type .deck-card {
+  position: relative;
+}
+
+/* State lens - subtle background tints, no glows */
+.deck-view--lens-state .deck-card[data-state="in_progress"] {
+  border-left: 2px solid var(--color-instance);
+  background: oklch(from var(--color-instance) l c h / 0.06);
+}
+
+.deck-view--lens-state .deck-card[data-state="completed"] {
+  border-left: 2px solid var(--color-source);
+  background: oklch(from var(--color-source) l c h / 0.04);
+}
+
+.deck-view--lens-state .deck-card[data-state="pending"] {
+  opacity: 0.6;
+  border-style: dashed;
+}
+
+/* Intent lens - left border indicators */
+.deck-view--lens-intent .deck-card[data-intent="research"] {
+  border-left: 3px solid #60a5fa;
+}
+
+.deck-view--lens-intent .deck-card[data-intent="build"] {
+  border-left: 3px solid #f59e0b;
+}
+
+.deck-view--lens-intent .deck-card[data-intent="capture"] {
+  border-left: 3px solid #8b5cf6;
+}
+
+.deck-view--lens-intent .deck-card[data-intent="produce"] {
+  border-left: 3px solid #10b981;
+}
+
+.deck-view--lens-intent .deck-card[data-intent="organize"] {
+  border-left: 3px solid #6b7280;
+}
+
+/* Recency lens - opacity gradient, no glows */
+.deck-view--lens-recency .deck-card[data-recency="fresh"] {
+  opacity: 1;
+  border-left: 2px solid oklch(80% 0.1 90);
+}
+
+.deck-view--lens-recency .deck-card[data-recency="recent"] {
+  opacity: 0.85;
+}
+
+.deck-view--lens-recency .deck-card[data-recency="aging"] {
+  opacity: 0.65;
+}
+
+.deck-view--lens-recency .deck-card[data-recency="stale"] {
+  opacity: 0.45;
+}
+
+/* Lineage lens - depth indicators */
+.deck-view--lens-lineage .deck-card {
+  position: relative;
+}
+
+.deck-view--lens-lineage .deck-card::after {
+  content: attr(data-depth);
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+/* ========================================
+ * Responsive Adjustments
+ * ======================================== */
+@media (max-width: 768px) {
+  .deck-view__lens-bar {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 8px 12px;
+  }
+
+  .deck-view__lens-btn {
+    padding: 6px 10px;
+    font-size: var(--font-size-xs);
+  }
+
+  .deck-view__lens-name {
+    display: none;
+  }
+
+  .deck-view__grid {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .deck-card {
+    padding: 10px;
+    min-height: 60px;
+  }
+
+  .deck-card__title {
+    font-size: var(--font-size-xs);
+  }
+}
+
+@media (max-width: 480px) {
+  .deck-view__grid {
+    grid-template-columns: 1fr;
+  }
+}
